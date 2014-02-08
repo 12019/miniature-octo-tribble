@@ -17,7 +17,10 @@
 #if MRVL_CONFIG_SYSFS
 #include <linux/sysfs.h>
 
+#define ENABLE_DUTYCYCLE_STATES 0
+
 static gckGALDEVICE galDevice = NULL;
+static gctUINT32 nodes_count = 10;
 
 static inline int __create_sysfs_file_debug(void);
 static inline void __remove_sysfs_file_debug(void);
@@ -46,7 +49,7 @@ static ssize_t show_pm_state (struct device *dev,
                     struct device_attribute *attr,
                     char * buf)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gceCHIPPOWERSTATE states;
     int i, len = 0;
 
@@ -97,7 +100,7 @@ static ssize_t store_pm_state (struct device *dev,
                     const char *buf, size_t count)
 {
     int core, state, i, gpu_count;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     /* count core numbers */
     for (i = 0, gpu_count = 0; i < gcdMAX_GPU_COUNT; i++)
@@ -115,6 +118,80 @@ static ssize_t store_pm_state (struct device *dev,
     {
         printk("[%d] failed in transfering power state to %d\n", core, state);
     }
+
+    return count;
+}
+
+static ssize_t _print_profiling_states(gckKERNEL Kernel,
+                    gctUINT32 Count,
+                    char *buf)
+{
+    gctUINT32 len   = 0;
+    gctUINT32 i     = 0;
+    gctUINT32 index = 0;
+    gctUINT64 tick  = 0;
+    gceSTATUS status = gcvSTATUS_OK;
+    gctUINT32 preTick, curTick;
+    gckProfNode_PTR profNode = gcvNULL;
+
+    gcmkONERROR(gckKERNEL_QueryLastProfNode(Kernel, &index, &profNode));
+    gcmkONERROR(gckOS_GetProfileTick(&tick));
+
+    preTick = gckOS_ProfileToMS(tick);
+
+    len += sprintf(buf+len, " [GPU%d] tick = %d\n", Kernel->core, preTick);
+    len += sprintf(buf+len, " index  duration  idle_ticks  busy_ticks\n");
+    len += sprintf(buf+len, "-------+-------+-----------+-----------+\n");
+
+    for(i = 0; i < Count; i++)
+    {
+        gctUINT32 idx = (index + gcdPROFILE_NODES_NUM - i) % gcdPROFILE_NODES_NUM;
+
+        curTick = profNode[idx].tick;
+
+        len += sprintf(buf+len, "%2d(%3d):%8d%s%12d\n", i, idx,
+                                preTick-curTick,
+                                profNode[idx].idle ? "" : "\t    ",
+                                curTick);
+        preTick = curTick;
+    }
+
+    len += sprintf(buf+len, "\n");
+
+    return len;
+
+OnError:
+    return sprintf(buf, "Failed to load stats for gpu %d\n", Kernel->core);
+}
+
+static ssize_t show_profiling_stats (struct device *dev,
+                    struct device_attribute *attr,
+                    char * buf)
+{
+    gctUINT32 i     = 0;
+    gctUINT32 len   = 0;
+
+    for(i = 0; i < gcdMAX_GPU_COUNT; i++)
+    {
+        if(galDevice->kernels[i] == gcvNULL)
+            continue;
+
+        len += _print_profiling_states(galDevice->kernels[i], nodes_count, buf+len);
+    }
+
+    return len;
+}
+
+static ssize_t store_profiling_stats (struct device *dev,
+                    struct device_attribute *attr,
+                    const char *buf, size_t count)
+{
+    int value_count = 0;
+
+    SYSFS_VERIFY_INPUT(sscanf(buf, "%d", &value_count), 1);
+    SYSFS_VERIFY_INPUT_RANGE(value_count, 5, 50);
+
+    nodes_count = value_count;
 
     return count;
 }
@@ -178,6 +255,55 @@ static ssize_t store_runtime_debug (struct device *dev,
     SYSFS_VERIFY_INPUT_RANGE(value, 0, 2);
 
     galDevice->pmrtDebug = value;
+
+    return count;
+}
+
+static ssize_t show_enable_dvfs (struct device *dev,
+                    struct device_attribute *attr,
+                    char * buf)
+{
+    int i, len = 0;
+
+    /*
+        State value:
+        - 0     disable dvfs
+        - 1     enable internal dvfs
+        - 2     enable external dvfs
+    */
+    for (i = 0; i < gcdMAX_GPU_COUNT; i++)
+    {
+        if (galDevice->kernels[i] != gcvNULL)
+        {
+
+            len += sprintf(buf+len, "[%s] enable_dfs = %d\n",
+                                    _core_desc[i],
+                                    galDevice->kernels[i]->hardware->dvfs);
+        }
+    }
+
+    return len;
+}
+
+static ssize_t store_enable_dvfs (struct device *dev,
+                    struct device_attribute *attr,
+                    const char *buf, size_t count)
+{
+    int core, state, i, gpu_count;
+
+    /* count core numbers */
+    for (i = 0, gpu_count = 0; i < gcdMAX_GPU_COUNT; i++)
+        if (galDevice->kernels[i] != gcvNULL)
+            gpu_count++;
+
+    /* read input and verify */
+    SYSFS_VERIFY_INPUT(sscanf(buf, "%d,%d", &core, &state), 2);
+    SYSFS_VERIFY_INPUT_RANGE(core, 0, (gpu_count-1));
+    SYSFS_VERIFY_INPUT_RANGE(state, 0, 2);
+
+    /* double check kernel object */
+    if(galDevice->kernels[core] != gcvNULL)
+        galDevice->kernels[core]->hardware->dvfs = state;
 
     return count;
 }
@@ -316,7 +442,7 @@ static ssize_t show_clk_rate (struct device *dev,
                     struct device_attribute *attr,
                     char * buf)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     unsigned int clockRate = 0;
     int i = 0, len = 0;
 
@@ -336,7 +462,7 @@ static ssize_t store_clk_rate (struct device *dev,
                     struct device_attribute *attr,
                     const char *buf, size_t count)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     int core, frequency, i, gpu_count;
 
     for (i = 0, gpu_count = 0; i < gcdMAX_GPU_COUNT; i++)
@@ -415,14 +541,18 @@ gc_sysfs_attr_rw(pm_state);
 gc_sysfs_attr_rw(profiler_debug);
 gc_sysfs_attr_rw(power_debug);
 gc_sysfs_attr_rw(runtime_debug);
+gc_sysfs_attr_rw(enable_dvfs);
 gc_sysfs_attr_rw(show_commands);
 gc_sysfs_attr_rw(fscale);
 gc_sysfs_attr_rw(register_stats);
 gc_sysfs_attr_rw(clk_rate);
+gc_sysfs_attr_rw(profiling_stats);
 
 static struct attribute *gc_debug_attrs[] = {
     &gc_attr_pm_state.attr,
+    &gc_attr_profiling_stats.attr,
     &gc_attr_profiler_debug.attr,
+    &gc_attr_enable_dvfs.attr,
     &gc_attr_power_debug.attr,
     &gc_attr_runtime_debug.attr,
     &gc_attr_show_commands.attr,
@@ -528,6 +658,7 @@ static ssize_t store_mem_stats (struct device *dev,
     return count;
 }
 
+#if ENABLE_DUTYCYCLE_STATES
 // TODO: finish *ticks* and *dutycycle* implementation
 static ssize_t show_ticks (struct device *dev,
                     struct device_attribute *attr,
@@ -558,12 +689,13 @@ static ssize_t store_dutycycle (struct device *dev,
     printk("Oops, %s is under working\n", __func__);
     return count;
 }
+#endif
 
 static ssize_t show_current_freq (struct device *dev,
                     struct device_attribute *attr,
                     char * buf)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     unsigned int clockRate = 0;
     int i = 0, len = 0;
 
@@ -631,16 +763,20 @@ static ssize_t store_control (struct device *dev,
 }
 
 gc_sysfs_attr_rw(mem_stats);
+#if ENABLE_DUTYCYCLE_STATES
 gc_sysfs_attr_rw(ticks);
 gc_sysfs_attr_rw(dutycycle);
+#endif
 gc_sysfs_attr_ro(current_freq);
 gc_sysfs_attr_rw(control);
 
 static struct attribute *gc_default_attrs[] = {
     &gc_attr_control.attr,
     &gc_attr_mem_stats.attr,
+#if ENABLE_DUTYCYCLE_STATES
     &gc_attr_ticks.attr,
     &gc_attr_dutycycle.attr,
+#endif
     &gc_attr_current_freq.attr,
     NULL
 };

@@ -27,7 +27,7 @@ Change log:
 #define _MLAN_DECL_H_
 
 /** MLAN release version */
-#define MLAN_RELEASE_VERSION		"421"
+#define MLAN_RELEASE_VERSION		"453"
 
 /** Re-define generic data types for MLAN/MOAL */
 /** Signed char (1-byte) */
@@ -71,7 +71,7 @@ typedef t_s32 t_sval;
 /** Structure packing begins */
 #define MLAN_PACK_START
 /** Structure packeing end */
-#define MLAN_PACK_END  __attribute__ ((packed))
+#define MLAN_PACK_END  __attribute__((packed))
 #else /* !__GNUC__ */
 #ifdef PRAGMA_PACK
 /** Structure packing begins */
@@ -103,7 +103,7 @@ typedef t_s32 t_sval;
 
 #ifndef MACSTR
 /** MAC address security format */
-#define MACSTR "%02x.%02x.%02x"
+#define MACSTR "%02x:XX:XX:XX:%02x:%02x"
 #endif
 
 #ifndef MAC2STR
@@ -117,7 +117,7 @@ typedef t_s32 t_sval;
 
 /** Macros for Data Alignment : address */
 #define ALIGN_ADDR(p, a)    \
-    ((((t_ptr)(p)) + (((t_ptr)(a)) - 1)) & ~(((t_ptr)(a)) - 1))
+	((((t_ptr)(p)) + (((t_ptr)(a)) - 1)) & ~(((t_ptr)(a)) - 1))
 
 /** Return the byte offset of a field in the given structure */
 #define MLAN_FIELD_OFFSET(type, field) ((t_u32)(t_ptr)&(((type *)0)->field))
@@ -151,13 +151,24 @@ typedef t_s32 t_sval;
 #define MLAN_STA_AMPDU_DEF_TXWINSIZE       16
 /** Default Win size attached during ADDBA response */
 #define MLAN_STA_AMPDU_DEF_RXWINSIZE       64
+/** RX winsize for COEX */
+#define MLAN_STA_COEX_AMPDU_DEF_RXWINSIZE  16
 #endif /* STA_SUPPORT */
 #ifdef UAP_SUPPORT
 /** Default Win size attached during ADDBA request */
 #define MLAN_UAP_AMPDU_DEF_TXWINSIZE       32
 /** Default Win size attached during ADDBA response */
 #define MLAN_UAP_AMPDU_DEF_RXWINSIZE       16
+/** RX winsize for COEX */
+#define MLAN_UAP_COEX_AMPDU_DEF_RXWINSIZE  16
 #endif /* UAP_SUPPORT */
+
+#ifdef WIFI_DIRECT_SUPPORT
+/** WFD use the same window size for tx/rx */
+#define MLAN_WFD_AMPDU_DEF_TXRXWINSIZE     16
+/** RX winsize for COEX */
+#define MLAN_WFD_COEX_AMPDU_DEF_RXWINSIZE  16
+#endif
 /** Block ack timeout value */
 #define MLAN_DEFAULT_BLOCK_ACK_TIMEOUT  0xffff
 /** Maximum Tx Win size configured for ADDBA request [10 bits] */
@@ -219,9 +230,9 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 #define MLAN_FRAG_MAX_VALUE             (2346)
 
 /** Minimum tx retry count */
-#define MLAN_TX_RETRY_MIN 		(0)
+#define MLAN_TX_RETRY_MIN		(0)
 /** Maximum tx retry count */
-#define MLAN_TX_RETRY_MAX 		(14)
+#define MLAN_TX_RETRY_MAX		(14)
 
 /** define SDIO block size for data Tx/Rx */
 /* We support up to 480-byte block size due to FW buffer limitation. */
@@ -260,6 +271,8 @@ typedef t_u8 mlan_802_11_mac_addr[MLAN_MAC_ADDR_LENGTH];
 
 /** Buffer flag for bridge packet */
 #define MLAN_BUF_FLAG_BRIDGE_BUF        MBIT(3)
+
+#define MLAN_BUF_FLAG_TCP_ACK		MBIT(9)
 
 #ifdef DEBUG_LEVEL1
 /** Debug level bit definition */
@@ -797,6 +810,10 @@ typedef struct _mlan_callbacks {
 				      IN t_u32 bss_index, IN t_u32 level);
     /** moal_assert */
 	 t_void(*moal_assert) (IN t_void * pmoal_handle, IN t_u32 cond);
+
+    /** moal_tcp_ack_tx_ind */
+	 t_void(*moal_tcp_ack_tx_ind) (IN t_void * pmoal_handle,
+				       IN pmlan_buffer pmbuf);
 } mlan_callbacks, *pmlan_callbacks;
 
 /** Interrupt Mode SDIO */
@@ -851,6 +868,9 @@ typedef struct _mlan_device {
 #endif
     /** FW download CRC check flag */
 	t_u32 fw_crc_check;
+    /** enable/disable rx work */
+	t_u8 rx_work;
+
 } mlan_device, *pmlan_device;
 
 /** MLAN API function prototype */

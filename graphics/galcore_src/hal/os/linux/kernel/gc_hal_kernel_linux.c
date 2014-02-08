@@ -254,12 +254,12 @@ gckKERNEL_MapVideoMemoryEx(
     )
 {
     gckGALDEVICE device;
-    PLINUX_MDL mdl;
-    PLINUX_MDL_MAP mdlMap;
+    PLINUX_MDL mdl = gcvNULL;
+    PLINUX_MDL_MAP mdlMap = gcvNULL;
     gcePOOL pool;
     gctUINT32 offset, base;
-    gceSTATUS status;
-    gctPOINTER logical;
+    gceSTATUS status = gcvSTATUS_OK;
+    gctPOINTER logical = gcvNULL;
 
     gcmkHEADER_ARG("Kernel=%p InUserSpace=%d Address=%08x",
                    Kernel, InUserSpace, Address);
@@ -312,17 +312,17 @@ gckKERNEL_MapVideoMemoryEx(
 
             mdl = (PLINUX_MDL) device->contiguousPhysical;
 
-            mdlMap = FindMdlMap(mdl, processID);
-            if (mdlMap)
+            status = gckOS_FindMdlMap(device->os, mdl, processID, &mdlMap);
+
+            if(gcmIS_SUCCESS(status) && (mdlMap != gcvNULL))
             {
-                logical = (gctPOINTER) mdlMap->vmaAddr;
+                logical = (gctPOINTER)mdlMap->vmaAddr;
             }
             else
             {
-                /* FindMdlMap Fail, Invalid mdlMap. */
-                gcmkONERROR(gcvSTATUS_NOT_FOUND);
+                /* Find MdlMap failed, Invalid mdlMap. */
+                gcmkONERROR(status);
             }
-
         }
 #if gcdENABLE_VG
         if (Core == gcvCORE_VG)
@@ -422,7 +422,7 @@ gckKERNEL_Notify(
     IN gctBOOL Data
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Kernel=%p Notification=%d Data=%d",
                    Kernel, Notification, Data);

@@ -56,7 +56,7 @@ _NewQueue(
     IN OUT gckCOMMAND Command
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctINT currentIndex, newIndex;
 
     gcmkHEADER_ARG("Command=0x%x", Command);
@@ -144,7 +144,7 @@ _IncrementCommitAtom(
     IN gctBOOL Increment
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckHARDWARE hardware;
     gctINT32 atomValue;
     gctBOOL powerAcquired = gcvFALSE;
@@ -330,7 +330,7 @@ _FlushMMU(
     IN gckCOMMAND Command
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 oldValue;
     gckHARDWARE hardware = Command->kernel->hardware;
 
@@ -379,7 +379,7 @@ gckCOMMAND_Construct(
 {
     gckOS os;
     gckCOMMAND command = gcvNULL;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctINT i;
     gctPOINTER pointer = gcvNULL;
 
@@ -640,7 +640,7 @@ gckCOMMAND_EnterCommit(
     IN gctBOOL FromPower
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckHARDWARE hardware;
     gctBOOL atomIncremented = gcvFALSE;
     gctBOOL semaAcquired = gcvFALSE;
@@ -664,8 +664,9 @@ gckCOMMAND_EnterCommit(
                                     gcvBROADCAST_GPU_COMMIT));
 
         /* Acquire the power management semaphore. */
-        gcmkONERROR(gckOS_AcquireSemaphore(Command->os,
-                                           Command->powerSemaphore));
+        gcmkONERROR(gckOS_AcquireSemaphore_Timeout(Command->os,
+                                                   Command->powerSemaphore,
+                                                   (gcdGPU_ADVANCETIMER_STALL*25)));
         semaAcquired = gcvTRUE;
     }
 
@@ -725,7 +726,7 @@ gckCOMMAND_ExitCommit(
     IN gctBOOL FromPower
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Command=0x%x", Command);
 
@@ -772,7 +773,7 @@ gckCOMMAND_Start(
     IN gckCOMMAND Command
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckHARDWARE hardware;
     gctUINT32 waitOffset;
     gctSIZE_T waitLinkBytes;
@@ -890,7 +891,7 @@ gckCOMMAND_Stop(
     )
 {
     gckHARDWARE hardware;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 idle;
 
     gcmkHEADER_ARG("Command=0x%x", Command);
@@ -1006,7 +1007,7 @@ gckCOMMAND_Commit(
     IN gctUINT32 ProcessID
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL commitEntered = gcvFALSE;
     gctBOOL contextAcquired = gcvFALSE;
     gckHARDWARE hardware;
@@ -1098,6 +1099,7 @@ gckCOMMAND_Commit(
     gcmkONERROR(gckOS_QueryNeedCopy(Command->os, ProcessID, &needCopy));
 
 #if gcdNULL_DRIVER
+
     /* Context switch required? */
     if ((Context != gcvNULL) && (Command->currContext != Context))
     {
@@ -1119,7 +1121,7 @@ gckCOMMAND_Commit(
             gcmSIZEOF(struct _gcoCMDBUF)
             ));
 
-        gcmkVERIFY_OBJECT(commandBufferObject, gcvOBJ_COMMANDBUFFER);
+        gcmkVERIFY_OBJECT_NORETUNE(commandBufferObject, gcvOBJ_COMMANDBUFFER);
     }
     else
     {
@@ -1132,7 +1134,7 @@ gckCOMMAND_Commit(
 
         commandBufferObject = pointer;
 
-        gcmkVERIFY_OBJECT(commandBufferObject, gcvOBJ_COMMANDBUFFER);
+        gcmkVERIFY_OBJECT_NORETUNE(commandBufferObject, gcvOBJ_COMMANDBUFFER);
         commandBufferMapped = gcvTRUE;
     }
 
@@ -2154,7 +2156,7 @@ gckCOMMAND_Reserve(
     OUT gctSIZE_T * BufferSize
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctSIZE_T bytes;
     gctSIZE_T requiredBytes;
     gctUINT32 requestedAligned;
@@ -2246,7 +2248,7 @@ gckCOMMAND_Execute(
     IN gctSIZE_T RequestedBytes
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gctPHYS_ADDR waitLinkPhysical;
     gctUINT8_PTR waitLinkLogical;
@@ -2439,7 +2441,7 @@ gckCOMMAND_Stall(
     gckOS os;
     gckHARDWARE hardware;
     gckEVENT eventObject;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctSIGNAL signal = gcvNULL;
     gctUINT timer = 0;
 
@@ -2626,7 +2628,7 @@ gckCOMMAND_Attach(
     IN gctUINT32 ProcessID
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
 
     gcmkHEADER_ARG("Command=0x%x", Command);
@@ -2697,7 +2699,7 @@ gckCOMMAND_Detach(
     IN gckCONTEXT Context
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
 
     gcmkHEADER_ARG("Command=0x%x Context=0x%x", Command, Context);

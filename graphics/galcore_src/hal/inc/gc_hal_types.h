@@ -318,6 +318,7 @@ typedef enum _gceSTATUS
     gcvSTATUS_DEVICE                =   -27,
     gcvSTATUS_NOT_MULTI_PIPE_ALIGNED =   -28,
     gcvSTATUS_MIPMAP_TOO_LARGE       = -29,
+    gcvSTATUS_INTERRUPTED_TIMEOUT    =   -30,
 
     /* Linker errors. */
     gcvSTATUS_GLOBAL_TYPE_MISMATCH  =   -1000,

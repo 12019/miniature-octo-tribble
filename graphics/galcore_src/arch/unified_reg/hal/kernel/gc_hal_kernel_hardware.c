@@ -56,7 +56,7 @@ _IdentifyHardware(
     OUT gcsHAL_QUERY_CHIP_IDENTITY_PTR Identity
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gctUINT32 chipIdentity;
 
@@ -271,8 +271,10 @@ _IdentifyHardware(
         Identity->superTileMode = 0;
     }
 
-    /* Exception for GC1000, revision 5037  &  GC800, revision 4612 */
-    if (((Identity->chipModel == gcv1000) && (Identity->chipRevision == 0x5037))
+    /* Exception for GC1000, revision 5035 &  GC800, revision 4612 */
+    if (((Identity->chipModel == gcv1000) && ((Identity->chipRevision == 0x5035)
+                                           || (Identity->chipRevision == 0x5036)
+                                           || (Identity->chipRevision == 0x5037)))
     || ((Identity->chipModel == gcv800) && (Identity->chipRevision == 0x4612)))
     {
         Identity->superTileMode = 1;
@@ -562,7 +564,7 @@ _VerifyDMA(
     gctUINT32_PTR State2
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 i;
 
     gcmkONERROR(gckOS_ReadRegisterEx(Os, Core, 0x660, State1));
@@ -595,7 +597,7 @@ _DumpDebugRegisters(
     IN gcsiDEBUG_REGISTERS_PTR Descriptor
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 select;
     gctUINT32 data;
     gctUINT i;
@@ -657,7 +659,7 @@ _IsGPUPresent(
     IN gckHARDWARE Hardware
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsHAL_QUERY_CHIP_IDENTITY identity;
     gctUINT32 control =
         ((((gctUINT32) (0)) & ~(((gctUINT32) (((gctUINT32) ((((1 ? 0:0) - (0 ? 0:0) + 1) == 32) ? ~0 : (~(~0 << ((1 ? 0:0) - (0 ? 0:0) + 1))))))) << (0 ? 0:0))) | (((gctUINT32) ((gctUINT32) (0) & ((gctUINT32) ((((1 ? 0:0) - (0 ? 0:0) + 1) == 32) ? ~0 : (~(~0 << ((1 ? 0:0) - (0 ? 0:0) + 1))))))) << (0 ? 0:0))) |
@@ -738,7 +740,7 @@ gckHARDWARE_Construct(
     OUT gckHARDWARE * Hardware
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckHARDWARE hardware = gcvNULL;
     gctUINT16 data = 0xff00;
     gctPOINTER pointer = gcvNULL;
@@ -975,7 +977,7 @@ gckHARDWARE_Destroy(
     IN gckHARDWARE Hardware
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x", Hardware);
 
@@ -1066,7 +1068,7 @@ gckHARDWARE_InitializeHardware(
     IN gckHARDWARE Hardware
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 baseAddress;
     gctUINT32 chipRev;
     gctUINT32 control;
@@ -1656,7 +1658,7 @@ gckHARDWARE_Execute(
     IN gctPHYS_ADDR Physmdl
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 address = 0, control;
 
     gcmkHEADER_ARG("Hardware=0x%x Logical=0x%x Bytes=%lu",
@@ -1790,7 +1792,7 @@ gckHARDWARE_WaitLink(
 {
     static const gctUINT waitCount = 200;
 
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 address;
     gctUINT32_PTR logical;
     gctSIZE_T bytes;
@@ -2019,7 +2021,7 @@ gckHARDWARE_End(
     )
 {
     gctUINT32_PTR logical = (gctUINT32_PTR) Logical;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x Logical=0x%x *Bytes=%lu",
                    Hardware, Logical, gcmOPT_VALUE(Bytes));
@@ -2096,7 +2098,7 @@ gckHARDWARE_Nop(
     )
 {
     gctUINT32_PTR logical = (gctUINT32_PTR) Logical;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x Logical=0x%x *Bytes=%lu",
                    Hardware, Logical, gcmOPT_VALUE(Bytes));
@@ -2171,7 +2173,7 @@ gckHARDWARE_Wait(
     IN OUT gctSIZE_T * Bytes
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32_PTR logical;
 
     gcmkHEADER_ARG("Hardware=0x%x Logical=0x%x Count=%u *Bytes=%lu",
@@ -2275,7 +2277,7 @@ gckHARDWARE_Event(
     gctUINT size;
     gctUINT32 destination = 0;
     gctUINT32_PTR logical = (gctUINT32_PTR) Logical;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x Logical=0x%x Event=%u FromWhere=%d *Bytes=%lu",
                    Hardware, Logical, Event, FromWhere, gcmOPT_VALUE(Bytes));
@@ -2408,7 +2410,7 @@ gckHARDWARE_PipeSelect(
     )
 {
     gctUINT32_PTR logical = (gctUINT32_PTR) Logical;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x Logical=0x%x Pipe=%d *Bytes=%lu",
                    Hardware, Logical, Pipe, gcmOPT_VALUE(Bytes));
@@ -2546,7 +2548,7 @@ gckHARDWARE_Link(
     IN gctPHYS_ADDR  Physmdl
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctSIZE_T bytes;
     gctUINT32 address;
     gctUINT32 link;
@@ -2648,7 +2650,7 @@ gckHARDWARE_UpdateQueueTail(
     IN gctUINT32 Offset
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x Logical=0x%x Offset=0x%08x",
                    Hardware, Logical, Offset);
@@ -2710,7 +2712,7 @@ gckHARDWARE_ConvertLogical(
     )
 {
     gctUINT32 address;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 baseAddress;
 
     gcmkHEADER_ARG("Hardware=0x%x Logical=0x%x", Hardware, Logical);
@@ -2758,7 +2760,7 @@ gckHARDWARE_ConvertLogicalMdl(
     )
 {
     gctUINT32 address;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 baseAddress;
 
     gcmkHEADER_ARG("Hardware=0x%x Logical=0x%x", Hardware, Logical);
@@ -2889,7 +2891,7 @@ gckHARDWARE_Interrupt(
 {
     gckEVENT eventObj;
     gctUINT32 data;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x InterruptValid=%d", Hardware, InterruptValid);
 
@@ -3154,7 +3156,7 @@ gckHARDWARE_SetMMU(
     IN gctPOINTER Logical
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 address = 0;
     gctUINT32 baseAddress;
 
@@ -3242,7 +3244,7 @@ gckHARDWARE_FlushMMU(
     IN gckHARDWARE Hardware
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckCOMMAND command;
     gctUINT32_PTR buffer;
     gctSIZE_T bufferSize;
@@ -3426,7 +3428,7 @@ gckHARDWARE_SetMMUv2(
     )
 {
 #if 1 
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 config, address;
     gckCOMMAND command;
     gctUINT32_PTR buffer;
@@ -3608,7 +3610,7 @@ gckHARDWARE_GetIdle(
     OUT gctUINT32 * Data
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 idle = 0;
     gctINT retry, poll, pollCount;
 
@@ -3681,7 +3683,7 @@ gckHARDWARE_Flush(
     gctUINT32 pipe;
     gctUINT32 flush = 0;
     gctUINT32_PTR logical = (gctUINT32_PTR) Logical;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x Flush=0x%x Logical=0x%x *Bytes=%lu",
                    Hardware, Flush, Logical, gcmOPT_VALUE(Bytes));
@@ -3774,7 +3776,7 @@ gckHARDWARE_SetFastClear(
 {
 #ifndef VIVANTE_NO_3D
     gctUINT32 debug;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x Enable=%d Compression=%d",
                    Hardware, Enable, Compression);
@@ -3903,7 +3905,7 @@ gckHARDWARE_QueryIdleEx(
     OUT gctBOOL_PTR IsIdle
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 idle, address;
 
     gcmkHEADER_ARG("Hardware=0x%x", Hardware);
@@ -4000,7 +4002,7 @@ gckHARDWARE_SetPowerManagementState(
     )
 {
 #if gcdPOWER_MANAGEMENT
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckCOMMAND command = gcvNULL;
     gckOS os;
     gctUINT flag, clock;
@@ -4487,7 +4489,7 @@ gckHARDWARE_SetPowerManagementState(
         }
 
         /* Don't touch clock control if dynamic frequency scaling is available. */
-        if(gcvTRUE != gckHARDWARE_IsFeatureAvailable(Hardware, gcvFEATURE_DYNAMIC_FREQUENCY_SCALING))
+        if(gcvSTATUS_TRUE != gckHARDWARE_IsFeatureAvailable(Hardware, gcvFEATURE_DYNAMIC_FREQUENCY_SCALING))
         {
             /*
                 Since clock gating internal 2D/3D clocks only save little
@@ -4793,7 +4795,7 @@ gckHARDWARE_SetFscaleValue(
     IN gctUINT32   FscaleValue
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 clock;
     gctBOOL acquired = gcvFALSE;
 
@@ -4932,7 +4934,7 @@ gckHARDWARE_QueryIdle(
     OUT gctBOOL_PTR IsIdle
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 idle, address;
 
     gcmkHEADER_ARG("Hardware=0x%x", Hardware);
@@ -5048,7 +5050,7 @@ gckHARDWARE_ProfileEngine2D(
     )
 {
 #if 1 
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcs2D_PROFILE_PTR profiler = Profile;
 
     gcmkHEADER_ARG("Hardware=0x%x", Hardware);
@@ -5097,7 +5099,7 @@ gckHARDWARE_QueryProfileRegisters(
     OUT gcsPROFILER_COUNTERS * Counters
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsPROFILER_COUNTERS * profiler = Counters;
 
     gcmkHEADER_ARG("Hardware=0x%x Counters=0x%x", Hardware, Counters);
@@ -5273,7 +5275,7 @@ _ResetGPU(
 {
 #if 1 
     gctUINT32 control, idle;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL   delayed = gcvFALSE;
 
     for (;;)
@@ -5436,7 +5438,7 @@ gckHARDWARE_Reset(
     )
 {
 #if 1 
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckCOMMAND command;
     gctBOOL acquired = gcvFALSE;
     gctBOOL pwrMutexAcquired = gcvFALSE;
@@ -5532,7 +5534,7 @@ gckHARDWARE_GetBaseAddress(
     OUT gctUINT32_PTR BaseAddress
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x", Hardware);
 
@@ -5670,7 +5672,7 @@ gckHARDWARE_Compose(
     )
 {
 #ifndef VIVANTE_NO_3D
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32_PTR triggerState;
 
     gcmkHEADER_ARG("Hardware=0x%x Physical=0x%x Logical=0x%x"
@@ -5777,6 +5779,7 @@ gckHARDWARE_IsFeatureAvailable(
 	available = ((((gctUINT32) (Hardware->identity.chipMinorFeatures2)) >> (0 ? 14:14) & ((gctUINT32) ((((1 ? 14:14) - (0 ? 14:14) + 1) == 32) ? ~0 : (~(~0 << ((1 ? 14:14) - (0 ? 14:14) + 1)))))) == (0x1 & ((gctUINT32) ((((1 ? 14:14) - (0 ? 14:14) + 1) == 32) ? ~0 : (~(~0 << ((1 ? 14:14) - (0 ? 14:14) + 1)))))))
 		&&      ((((gctUINT32) (Hardware->identity.chipFeatures)) >> (0 ? 2:2) & ((gctUINT32) ((((1 ? 2:2) - (0 ? 2:2) + 1) == 32) ? ~0 : (~(~0 << ((1 ? 2:2) - (0 ? 2:2) + 1)))))) == (0x1 & ((gctUINT32) ((((1 ? 2:2) - (0 ? 2:2) + 1) == 32) ? ~0 : (~(~0 << ((1 ? 2:2) - (0 ? 2:2) + 1)))))));
 	        }
+        break;
 
     default:
         gcmkFATAL("Invalid feature has been requested.");
@@ -5974,7 +5977,7 @@ gckHARDWARE_DumpGPUState(
         0x43c, 0x440, 0x444, 0x414,
     };
 
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckKERNEL kernel;
     gctUINT32 idle, axi;
     gctUINT32 dmaAddress1, dmaAddress2;
@@ -6145,7 +6148,7 @@ gckHARDWARE_ReadPerformanceRegister(
     OUT gctUINT32_PTR Value
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Hardware=0x%x PerformanceAddress=0x%x IndexAddress=0x%x "
                    "IndexShift=%u Index=%u",
@@ -6187,7 +6190,7 @@ gckHARDWARE_GetFrameInfo(
     OUT gcsHAL_FRAME_INFO * FrameInfo
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT i, clock;
     gcsHAL_FRAME_INFO info;
 #if gcdFRAME_DB_RESET
@@ -6549,7 +6552,7 @@ gckHARDWARE_QueryLoad(
     )
 {
     gctUINT32 debug1;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcmkHEADER_ARG("Hardware=0x%X", Hardware);
 
     gcmkVERIFY_OBJECT(Hardware, gcvOBJ_HARDWARE);
@@ -6620,7 +6623,7 @@ gckHARDWARE_SetDVFSPeroid(
     OUT gctUINT32 Frequency
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 period;
     gctUINT32 eater;
 
@@ -6696,7 +6699,7 @@ gckHARDWARE_InitDVFS(
     IN gckHARDWARE Hardware
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 data;
 
     gcmkHEADER_ARG("Hardware=0x%X", Hardware);

@@ -350,6 +350,9 @@ struct _gcUNIFORM
     /* Length of the uniform name. */
     gctSIZE_T                   nameLength;
 
+    /* workaround for uniform array[1]. */
+    gctBOOL                           uniformArray1;
+
     /* The uniform name. */
     char                        name[1];
 };
@@ -400,6 +403,9 @@ typedef struct _gcBINARY_UNIFORM
     /* Only used for structure, point to parent _gcUNIFORM */
     gctINT16                    parent;
 
+    /* workaround for uniform array[1]. */
+    gctBOOL                           uniformArray1;
+
     /* The uniform name. */
     char                        name[1];
 }
@@ -433,6 +439,9 @@ typedef struct _gcBINARY_UNIFORM_EX
     /* Corresponding Index of Program's GLUniform */
     gctUINT16                   glUniformIndex;
 #endif /* GC_ENABLE_LOADTIME_OPT */
+
+    /* workaround for uniform array[1]. */
+    gctBOOL                           uniformArray1;
 
     /* The uniform name. */
     char                        name[1];

@@ -39,10 +39,11 @@
 #   include <linux/platform_device.h>
 #endif
 
-#ifdef MRVL_VIDEO_MEMORY_USE_ION
+#if (MRVL_VIDEO_MEMORY_USE_TYPE == gcdMEM_TYPE_ION)
 #include <linux/ion.h>
 #include <linux/pxa_ion.h>
 #endif
+
 #ifdef CONFIG_PXA_DVFM
 #   include <mach/dvfm.h>
 #   include <mach/pxa3xx_dvfm.h>
@@ -99,7 +100,7 @@ module_param(contiguousSize, ulong, 0644);
 static ulong contiguousBase = 0;
 module_param(contiguousBase, ulong, 0644);
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
 #if MRVL_PLATFORM_MMP3
 static long pmemSize = 128 << 20;
 #else
@@ -186,7 +187,7 @@ static struct file_operations gc_proc_ops = {
 
 static gceSTATUS _gc_gather_infomation(char *buf, ssize_t* length)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     ssize_t len = 0;
     gctUINT32 pid = 0;
 
@@ -218,7 +219,7 @@ static ssize_t gc_proc_read(
     size_t count,
     loff_t *offset)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     ssize_t len = 0;
     char buf[1000];
 
@@ -387,7 +388,7 @@ int drv_open(
     struct file* filp
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL attached = gcvFALSE;
     gcsHAL_PRIVATE_DATA_PTR data = gcvNULL;
     gctINT i;
@@ -509,12 +510,10 @@ int drv_release(
     struct file* filp
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsHAL_PRIVATE_DATA_PTR data = gcvNULL;
     gckGALDEVICE device;
     gctINT i;
-    ssize_t len = 0;
-    char buf[1000];
 
     gcmkHEADER_ARG("inode=0x%08X filp=0x%08X", inode, filp);
 
@@ -583,11 +582,12 @@ int drv_release(
     }
 
     /* A process gets detached. */
+    gcmkPRINT("Process %d released (%s)\n", data->pidOpen, _GC_VERSION_STRING_);
     for (i = 0; i < gcdMAX_GPU_COUNT; i++)
     {
         if (galDevice->kernels[i] != gcvNULL)
         {
-            gcmkONERROR(gckKERNEL_ShowProcessMemUsage(galDevice->kernels[i], data->pidOpen));
+            /*gcmkONERROR(gckKERNEL_ShowProcessMemUsage(galDevice->kernels[i], data->pidOpen));*/
             gcmkONERROR(gckKERNEL_AttachProcessEx(galDevice->kernels[i], gcvFALSE, data->pidOpen));
         }
     }
@@ -595,9 +595,9 @@ int drv_release(
     kfree(data);
     filp->private_data = gcvNULL;
 
-    /* Print memory information */
+    /* Print memory information
     _gc_gather_infomation(buf, &len);
-    printk("%s", buf);
+    printk("%s", buf);*/
 
     /* Success. */
     gcmkFOOTER_NO();
@@ -619,7 +619,7 @@ long drv_ioctl(
     unsigned long arg
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsHAL_INTERFACE iface;
     gctUINT32 copyLen;
     DRIVER_ARGS drvArgs;
@@ -905,7 +905,7 @@ static int drv_mmap(
 
 #if !gcdPAGED_MEMORY_CACHEABLE
     vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
-    vma->vm_flags    |= VM_IO | VM_DONTCOPY | VM_DONTEXPAND;
+    vma->vm_flags    |= gcdVM_FLAGS;
 #endif
     vma->vm_pgoff     = 0;
 
@@ -969,7 +969,7 @@ static int drv_init(void)
 {
     int ret, i;
     int result = -EINVAL;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckGALDEVICE device = gcvNULL;
     struct class* device_class = gcvNULL;
 
@@ -1019,7 +1019,7 @@ static int drv_init(void)
         printk("  contiguousSize    = %ld\n",     contiguousSize);
         printk("  contiguousBase    = 0x%08lX\n", contiguousBase);
         printk("  bankSize          = 0x%08lX\n", bankSize);
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
         printk("  pmemSize          = %ld\n",     pmemSize);
 #endif
         printk("  fastClear         = %d\n",      fastClear);
@@ -1032,7 +1032,8 @@ static int drv_init(void)
         printk("  coreClock       = %lu\n",     coreClock);
 #endif
     }
-
+    physSize = 0x80000000;
+    printk("  physSize modified to          = 0x%08lX\n", physSize);
     if(logFileSize != 0)
     {
         gckDebugFileSystemInitialize();
@@ -1047,7 +1048,7 @@ static int drv_init(void)
         irqLineVG,
         registerMemBaseVG, registerMemSizeVG,
         contiguousBase, contiguousSize,
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
         pmemSize,
 #endif
         bankSize, fastClear, compression, baseAddress, physSize, signal,
@@ -1208,7 +1209,7 @@ static void drv_exit(void)
 #if MRVL_CONFIG_ENABLE_EARLYSUSPEND
 static gctINT __set_gpu_power(gckGALDEVICE Device, gceCHIPPOWERSTATE State)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctINT i;
 
     for (i = 0; i < gcdMAX_GPU_COUNT; i++)
@@ -1286,7 +1287,7 @@ static struct early_suspend gpu_early_suspend_handler = {
 static int __enable_gpufreq(gckGALDEVICE device)
 {
     gctUINT32 clockRate = 0;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     int i;
 
     status = gckOS_QueryClkRate(device->os, gcvCORE_MAJOR, &clockRate);
@@ -1319,7 +1320,7 @@ static int __enable_gpufreq(gckGALDEVICE device)
 static int __disable_gpufreq(gckGALDEVICE device)
 {
     gctUINT32 clockRate = 0;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     int i;
 
     for(i = 0; i < gcdMAX_GPU_COUNT; i++)
@@ -1350,10 +1351,11 @@ static int __disable_gpufreq(gckGALDEVICE device)
 }
 #endif
 
-#ifdef MRVL_VIDEO_MEMORY_USE_ION
+#if (MRVL_VIDEO_MEMORY_USE_TYPE == gcdMEM_TYPE_ION)
 extern struct ion_device *pxa_ion_dev;
 struct ion_client *gc_ion_client = NULL;
 #endif
+
 static int __devinit gpu_probe(struct platform_device *pdev)
 {
     int ret = -ENODEV;
@@ -1420,8 +1422,12 @@ static int __devinit gpu_probe(struct platform_device *pdev)
         register_early_suspend(&gpu_early_suspend_handler);
 #endif
 
-#ifdef MRVL_VIDEO_MEMORY_USE_ION
+#if (MRVL_VIDEO_MEMORY_USE_TYPE == gcdMEM_TYPE_ION)
+#if (gcdMEM_TYPE_IONAF_3_4_39 == 1)
+        gc_ion_client = ion_client_create(pxa_ion_dev, "gc ion");
+#else
         gc_ion_client = ion_client_create(pxa_ion_dev, ION_HEAP_CARVEOUT_MASK, "gc ion");
+#endif
 #endif
 
 #if MRVL_CONFIG_USE_PM_RUNTIME
@@ -1471,7 +1477,7 @@ static int __devinit gpu_remove(struct platform_device *pdev)
 
 static int __devinit gpu_suspend(struct platform_device *dev, pm_message_t state)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckGALDEVICE device;
     gctINT i;
     gctINT ret = 0;
@@ -1530,7 +1536,7 @@ err_out:
 
 static int __devinit gpu_resume(struct platform_device *dev)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckGALDEVICE device;
     gctINT i;
     gctINT ret = 0;

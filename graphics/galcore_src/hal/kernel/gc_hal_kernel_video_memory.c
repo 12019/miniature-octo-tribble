@@ -149,7 +149,7 @@ _Merge(
     )
 {
     gcuVIDMEM_NODE_PTR node;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     /* Save pointer to next node. */
     node = Node->VidMem.next;
@@ -220,7 +220,7 @@ gceSTATUS
 gckVIDMEM_ConstructVirtual(
     IN gckKERNEL Kernel,
     IN gctBOOL Contiguous,
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     IN gctBOOL  IsPmem,
 #endif
     IN gctSIZE_T Bytes,
@@ -255,7 +255,7 @@ gckVIDMEM_ConstructVirtual(
     /* Initialize gcuVIDMEM_NODE union for virtual memory. */
     node->Virtual.kernel        = Kernel;
     node->Virtual.contiguous    = Contiguous;
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     node->Virtual.bPmem         = IsPmem;
 #endif
     node->Virtual.logical       = gcvNULL;
@@ -296,7 +296,7 @@ gckVIDMEM_ConstructVirtual(
     gcmkONERROR(gckKERNEL_FindDatabase(Kernel, processID, gcvFALSE, &database));
 
     gckOS_GetTicks(&startTime);
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     if(IsPmem)
     {
         /* Allocate the pmem memory. */
@@ -525,7 +525,7 @@ gckVIDMEM_Construct(
     )
 {
     gckVIDMEM memory = gcvNULL;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcuVIDMEM_NODE_PTR node;
     gctINT i, banks = 0;
     gctPOINTER pointer = gcvNULL;
@@ -841,7 +841,7 @@ gckVIDMEM_Allocate(
     )
 {
     gctSIZE_T bytes;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Memory=0x%x Width=%u Height=%u Depth=%u BytesPerPixel=%u "
                    "Alignment=%u Type=%d",
@@ -975,7 +975,7 @@ _FindNode(
 
 #if gcdENABLE_BANK_ALIGNMENT
     gctUINT32 bankAlignment;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 #endif
 
     if (Memory->sentinel[Bank].VidMem.nextFree == gcvNULL)
@@ -1089,7 +1089,7 @@ gckVIDMEM_AllocateLinear(
     OUT gcuVIDMEM_NODE_PTR * Node
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcuVIDMEM_NODE_PTR node;
     gctUINT32 alignment;
     gctINT bank, i;
@@ -1365,7 +1365,7 @@ gckVIDMEM_Free(
     IN gcuVIDMEM_NODE_PTR Node
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckKERNEL kernel = gcvNULL;
     gckVIDMEM memory = gcvNULL;
     gcuVIDMEM_NODE_PTR node;
@@ -1557,7 +1557,7 @@ gckVIDMEM_Free(
         gcmkONERROR(gckOS_GetPageSize(kernel->os, &pageSize));
         bytesAligned = gcmALIGN(bytes, pageSize);
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
         if(Node->Virtual.bPmem)
         {
             /* Free the pmem memory. */
@@ -1570,10 +1570,11 @@ gckVIDMEM_Free(
 #endif
         {
             /* Free the virtual memory. */
-            gcmkVERIFY_OK(
+            gcmkONERROR(
                 gckOS_FreePagedMemory(kernel->os,
                                     Node->Virtual.physical,
                                     Node->Virtual.bytes));
+            Node->Virtual.physical = gcvNULL;
         }
 
         /* Update video memory usage according to surface type. */
@@ -1631,7 +1632,7 @@ gckVIDMEM_FreeHandleMemory(
     IN gckVIDMEM Memory,
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL mutex = gcvFALSE;
     gcuVIDMEM_NODE_PTR node;
     gctINT i;
@@ -1741,7 +1742,7 @@ _NeedVirtualMapping(
     OUT gctBOOL * NeedMapping
 )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 phys;
     gctUINT32 end;
     gcePOOL pool;
@@ -1821,7 +1822,7 @@ gckVIDMEM_Lock(
     OUT gctUINT32 * Address
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
     gctBOOL locked = gcvFALSE;
     gckOS os = gcvNULL;
@@ -1940,7 +1941,7 @@ gckVIDMEM_Lock(
 
             locked = gcvTRUE;
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
             if(!Node->Virtual.bPmem)
             {
                 gcmkONERROR(_NeedVirtualMapping(Kernel, Kernel->core, Node, &needMapping));
@@ -2147,7 +2148,7 @@ gckVIDMEM_Unlock(
     IN gctBOOL IsDrvRelease
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckHARDWARE hardware;
     gctPOINTER buffer;
     gctSIZE_T requested, bufferSize;
@@ -2304,7 +2305,7 @@ gckVIDMEM_Unlock(
                     gcmkONERROR(gckOS_GetPageSize(Kernel->os, &pageSize));
                     bytesAligned = gcmALIGN(Node->Virtual.bytes, pageSize);
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
                     if(Node->Virtual.bPmem)
                     {
                         /* Free the pmem memory. */
@@ -2317,9 +2318,10 @@ gckVIDMEM_Unlock(
 #endif
                     {
                         /* Free the virtual memory. */
-                        gcmkVERIFY_OK(gckOS_FreePagedMemory(Kernel->os,
+                        gcmkONERROR(gckOS_FreePagedMemory(Kernel->os,
                                                             Node->Virtual.physical,
                                                             Node->Virtual.bytes));
+                        Node->Virtual.physical = gcvNULL;
                     }
 
                     gcmkVERIFY_OK(gckOS_UpdateVidMemUsage(Kernel->os, gcvFALSE, bytesAligned, Node->Virtual.surfType));
@@ -2427,6 +2429,18 @@ gckVIDMEM_Unlock(
                 gcmkONERROR(gckCOMMAND_ExitCommit(command, gcvFALSE));
                 commitEntered = gcvFALSE;
             }
+            /* Release the mutex. */
+            gcmkVERIFY_OK(gckOS_ReleaseMutex(os, Node->Virtual.mutex));
+            acquired = gcvFALSE;
+
+            if(IsDrvRelease)
+            {
+                status = gckCOMMAND_Stall(Kernel->command, gcvFALSE);
+                if(gcmIS_ERROR(status))
+                {
+                    gckOS_Log(_GFX_LOG_NOTIFY_, "gcvDB_VIDEO_MEMORY Unlock gcdGPU_ADVANCETIMER_STALL fail ERR");
+                }
+            }
 
             gcmkTRACE_ZONE(gcvLEVEL_INFO, gcvZONE_VIDMEM,
                            "Scheduled unlock for virtual node 0x%x",
@@ -2434,6 +2448,10 @@ gckVIDMEM_Unlock(
 
             /* Schedule the surface to be unlocked. */
             *Asynchroneous = gcvTRUE;
+
+            /* Success. */
+            gcmkFOOTER_ARG("*Asynchroneous=%d", gcmOPT_VALUE(Asynchroneous));
+            return gcvSTATUS_OK;
         }
 
         /* Release the mutex. */

@@ -59,7 +59,7 @@ gceSTATUS gckVGKERNEL_Construct(
     OUT gckVGKERNEL * Kernel
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckVGKERNEL kernel = gcvNULL;
 
     gcmkHEADER_ARG("Os=0x%x Context=0x%x", Os, Context);
@@ -168,7 +168,7 @@ gceSTATUS gckVGKERNEL_Destroy(
     IN gckVGKERNEL Kernel
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Kernel=0x%x", Kernel);
 
@@ -262,7 +262,7 @@ gckKERNEL_AllocateLinearMemory(
     )
 {
     gcePOOL pool;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckVIDMEM videoMemory;
 
     /* Get initial pool. */
@@ -386,7 +386,7 @@ gceSTATUS gckVGKERNEL_Dispatch(
     IN OUT gcsHAL_INTERFACE * Interface
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsHAL_INTERFACE * kernelInterface = Interface;
     gcuVIDMEM_NODE_PTR node;
     gctUINT32 processID;
@@ -840,7 +840,7 @@ gckKERNEL_QueryCommandBuffer(
     OUT gcsCOMMAND_BUFFER_INFO_PTR Information
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Kernel=0x%x *Pool=0x%x",
                    Kernel, Information);

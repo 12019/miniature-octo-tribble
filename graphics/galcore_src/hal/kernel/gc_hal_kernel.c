@@ -24,7 +24,7 @@
 
 #include "gc_hal_kernel_precomp.h"
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
 #include <asm/page.h>
 #endif
 
@@ -160,7 +160,7 @@ gckKERNEL_Construct(
     )
 {
     gckKERNEL kernel = gcvNULL;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctSIZE_T i;
     gctPOINTER pointer = gcvNULL;
 
@@ -544,7 +544,7 @@ gckKERNEL_Destroy(
     return gcvSTATUS_OK;
 }
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
 /*******************************************************************************
 **
 ** _UsePmem
@@ -640,7 +640,7 @@ _AllocateMemory(
     )
 {
     gcePOOL pool;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckVIDMEM videoMemory;
     gctSIZE_T pageSize = 0;
     gctSIZE_T bytesAligned = 0;
@@ -786,7 +786,7 @@ _AllocateMemory(
     )
 {
     gcePOOL pool;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckVIDMEM videoMemory;
     gctINT loopCount;
     gcuVIDMEM_NODE_PTR node = gcvNULL;
@@ -2292,9 +2292,18 @@ gckKERNEL_Dispatch(
 
     /* Flush Cache --- Port from bmm-lib module */
     case gcvHAL_FLUSH_CACHE:
+#if MRVL_OLD_FLUSHCACHE
         gcmkONERROR(gckOS_FlushCache(Interface->u.CacheFlush.vaddr,
                                      Interface->u.CacheFlush.offset,
                                      Interface->u.CacheFlush.dir));
+
+#else
+        gcmkONERROR(gckOS_FlushCache(Kernel->os,
+                                     Kernel->core,
+                                     Interface->u.CacheFlush.vaddr,
+                                     Interface->u.CacheFlush.offset,
+                                     Interface->u.CacheFlush.dir));
+#endif
         break;
 
     case gcvHAL_SET_FSCALE_VALUE:
@@ -2402,7 +2411,7 @@ gckKERNEL_AttachProcess(
     IN gctBOOL Attach
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 processID;
 
     gcmkHEADER_ARG("Kernel=0x%x Attach=%d", Kernel, Attach);
@@ -2454,7 +2463,7 @@ gckKERNEL_AttachProcessEx(
     IN gctUINT32 PID
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctINT32 old;
 
     gcmkHEADER_ARG("Kernel=0x%x Attach=%d PID=%d", Kernel, Attach, PID);
@@ -2554,7 +2563,7 @@ gckKERNEL_MapLogicalToPhysical(
     IN OUT gctPOINTER * Data
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     static gctBOOL baseAddressValid = gcvFALSE;
     static gctUINT32 baseAddress;
     gctBOOL needBase;
@@ -3063,7 +3072,7 @@ gckKERNEL_Recovery(
 {
 #if gcdENABLE_RECOVERY
 #define gcdEVENT_MASK 0x3FFFFFFF
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckEVENT eventObj;
     gckHARDWARE hardware;
 #if gcdSECURE_USER
@@ -3194,7 +3203,7 @@ gckKERNEL_OpenUserData(
     OUT gctPOINTER * KernelPointer
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG(
         "Kernel=0x%08X NeedCopy=%d StaticStorage=0x%08X "

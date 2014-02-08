@@ -36,7 +36,7 @@ static ssize_t store_power_state (struct device *dev,
                     const char *buf, size_t count)
 {
     int state, core, broadcast, gpu_count, i;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 tgid;
 
     /* count ocre numbers */
@@ -110,7 +110,7 @@ static ssize_t store_reset (struct device *dev,
                     const char *buf, size_t count)
 {
     int core, gpu_count, i;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     /* count core numbers */
     for (i = 0, gpu_count = 0; i < gcdMAX_GPU_COUNT; i++)
@@ -139,7 +139,7 @@ static ssize_t show_clkreg (struct device *dev,
     int i;
     unsigned int clkreg;
     gckHARDWARE hardware;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     for (i = 0; i < gcdMAX_GPU_COUNT; i++)
     {
@@ -169,7 +169,7 @@ static ssize_t show_idle (struct device *dev,
                     char * buf)
 {
     char *str = buf;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL isIdle;
     int i;
 
@@ -207,7 +207,7 @@ static ssize_t store_freq (struct device *dev,
                     const char *buf, size_t count)
 {
     int core, scale, gpu_count, i;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckHARDWARE hardware;
 
     /* count core numbers */
@@ -301,7 +301,7 @@ static ssize_t store_mutex (struct device *dev,
                     const char *buf, size_t count)
 {
     int core, time, gpu_count, i;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckHARDWARE hardware;
 
     /* count core numbers */

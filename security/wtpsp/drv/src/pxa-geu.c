@@ -72,7 +72,7 @@
 
 #define GEU_MODE_DMA
 
-#define GEU_DRIVER_VERSION	"GEU drvier 0.0.5"
+#define GEU_DRIVER_VERSION	"GEU drvier 0.0.6"
 
 #define PXA_GEU_IOMEM		0xD4201000
 #define PXA_GEU_IOMEM_SIZE	0x00001000
@@ -80,6 +80,8 @@
 #if defined(CONFIG_CPU_PXA910)
 #define PXA_GEU_IRQ			IRQ_PXA910_AEU
 #elif defined(CONFIG_CPU_PXA988)
+#define PXA_GEU_IRQ		IRQ_PXA988_AEU
+#elif defined(CONFIG_CPU_PXA1088)
 #define PXA_GEU_IRQ		IRQ_PXA988_AEU
 #endif
 
@@ -292,10 +294,7 @@ static int GEU_AES_direct(unsigned char *in, unsigned char *out, unsigned int le
 	conf = GEUReadReg(GEU_CONFIG);
 	while (length > 0) {
 		unsigned int len = length>GEU_DMA_THRESHOLD?GEU_DMA_THRESHOLD:length;
-		if (copy_from_user(dma_buf_base, in, len)) {
-			ret = -EFAULT;
-			break;
-		}
+		memcpy(dma_buf_base, in, len);
 		/* setup in/out DMA */
 		DCSR(geu_dma_in) = DCSR_NODESC;
 		DSADR(geu_dma_in) = dma_phy_base;
@@ -316,10 +315,7 @@ static int GEU_AES_direct(unsigned char *in, unsigned char *out, unsigned int le
 			ret = -ETIME;
 			break;
 		}
-		if (copy_to_user(out, dma_buf_base, len)){
-			ret = -EFAULT;
-			break;
-		}
+		memcpy(out, dma_buf_base, len);
 		in += len;
 		out += len;
 		length -= len;
@@ -436,15 +432,11 @@ static int GEU_AES_pio(unsigned char *in, unsigned char *out, unsigned int lengt
 	if ((unsigned long)inData & 3 || (unsigned long)outData & 3) {
 		unsigned int blkbuf[4];
 		for (i=0; i<length/16; i++) {
-			if (copy_from_user(blkbuf, inData, sizeof(blkbuf))) {
-				ret = -EFAULT;
-				break;
-			}
+			memcpy(blkbuf, inData, sizeof(blkbuf));
 			GEUWriteReg(GEU_INPUT_DATA_ENC_DEC, blkbuf[0]);
 			GEUWriteReg(GEU_INPUT_DATA_ENC_DEC + 4, blkbuf[1]);
 			GEUWriteReg(GEU_INPUT_DATA_ENC_DEC + 8, blkbuf[2]);
 			GEUWriteReg(GEU_INPUT_DATA_ENC_DEC + 12, blkbuf[3]);
-			GEUWriteReg(GEU_STATUS, GEU_STATUS_DINREADY);
 			if (0 == wait_for_completion_timeout(&cmd_complete, GEU_DMA_TIMEOUT)) {
 				printk("GEU timeout status(%x) config(%x)\n", GEUReadReg(GEU_STATUS), GEUReadReg(GEU_CONFIG));
 				ret = -ETIME;
@@ -455,10 +447,7 @@ static int GEU_AES_pio(unsigned char *in, unsigned char *out, unsigned int lengt
 			blkbuf[1] = GEUReadReg(GEU_OUT_DATA_AFTER_ENC_DEC + 4);
 			blkbuf[2] = GEUReadReg(GEU_OUT_DATA_AFTER_ENC_DEC + 8);
 			blkbuf[3] = GEUReadReg(GEU_OUT_DATA_AFTER_ENC_DEC + 12);
-			if(copy_to_user(outData, blkbuf, sizeof(blkbuf))) {
-				ret = -EFAULT;
-				break;
-			}
+			memcpy(outData, blkbuf, sizeof(blkbuf));
 			inData += 4;
 			outData += 4;
 		}
@@ -650,9 +639,7 @@ static int GEU_gen_rand(unsigned char *rnd, unsigned int len)
 			new = GEUReadReg(GEU_HW_RANDOM_NUM_GEN);
 		}
 		copy = len>sizeof(unsigned int)?sizeof(unsigned int):len;
-		if (copy_to_user(rnd, &new, copy)) {
-			break;
-		}
+		memcpy(rnd, &new, copy);
 		rnd += copy;
 		len -= copy;
 	}

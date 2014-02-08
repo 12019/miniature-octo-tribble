@@ -18,10 +18,10 @@
 # ARE EXPRESSLY DISCLAIMED.  The License provides additional details about 
 # this warranty disclaimer.
 
-CC=		$(CROSS_COMPILE)gcc
-LD=		$(CROSS_COMPILE)ld
-BACKUP=		/root/backup
-YMD=		`date +%Y%m%d%H%M`
+#CC=		$(CROSS_COMPILE)gcc
+#LD=		$(CROSS_COMPILE)ld
+#BACKUP=		/root/backup
+#YMD=		`date +%Y%m%d%H%M`
 
 #############################################################################
 # Configuration Options
@@ -82,8 +82,8 @@ export CONFIG_STATIC_LINK=y
 # Select Platform Tools
 #############################################################################
 
-MODEXT = ko
-EXTRA_CFLAGS += -I$(M)/mlan
+#MODEXT = ko
+EXTRA_CFLAGS += -I./mlan
 EXTRA_CFLAGS += -DLINUX
 
 # KERNELDIR point to the installed kernel directory.
@@ -91,7 +91,7 @@ EXTRA_CFLAGS += -DLINUX
 # make KERNELDIR=/usr/src/arm/<arch-bsp-path>
 # Alternatively KERNELDIR can be set in the environment.
 # Default value for KERNELDIR is set below.
-KERNELDIR ?= /usr/src/arm/linux-3.4.5-pxa988
+#KERNELDIR ?= /usr/src/arm/linux-3.4.5-pxa988
 
 # CROSS_COMPILE specify the prefix used for all executables used
 # during compilation. Only gcc and related bin-utils executables
@@ -99,7 +99,7 @@ KERNELDIR ?= /usr/src/arm/linux-3.4.5-pxa988
 # make CROSS_COMPILE=</usr/local/arm/4.1.1/bin/>arm-linux-
 # Alternatively CROSS_COMPILE can be set in the environment.
 # Default value for CROSS_COMPILE is set below.
-CROSS_COMPILE ?= /usr/local/arm-eabi-4.4.3/bin/arm-eabi-
+#CROSS_COMPILE ?= /usr/local/arm-eabi-4.4.3/bin/arm-eabi-
 
 # INSTALLDIR specify the path to install the kernel module after
 # succesful compilation.
@@ -107,7 +107,7 @@ CROSS_COMPILE ?= /usr/local/arm-eabi-4.4.3/bin/arm-eabi-
 # make INSTALLDIR=/tftpboot/<rootfs>
 # Alternatively INSTALLDIR can be set in the environment.
 # Default value for INSTALL is set below.
-INSTALLDIR ?= /tftpboot/pxa9xx/root
+#INSTALLDIR ?= /tftpboot/pxa9xx/root
 
 # ARCH specifies the architecture of the target processor, this kernel
 # module will run.
@@ -115,18 +115,18 @@ INSTALLDIR ?= /tftpboot/pxa9xx/root
 # make ARCH=<arm/i386>
 # Alternatively ARCH can be set in the environment
 # Default values of ARCH for specific platform are set below.
-ARCH ?= arm
+#ARCH ?= arm
 
 LD += -S
 
-BINDIR = ../bin_sd8787
-APPDIR= $(shell if test -d "mapp"; then echo mapp; fi)
+#BINDIR = ../bin_sd87xx
+#APPDIR= $(shell if test -d "mapp"; then echo mapp; fi)
 
 #############################################################################
 # Compiler Flags
 #############################################################################
 
-	EXTRA_CFLAGS += -I$(KERNELDIR)/include
+#	EXTRA_CFLAGS += -I$(KERNELDIR)/include
 
 	EXTRA_CFLAGS += -DFPNUM='"66"'
 
@@ -207,22 +207,23 @@ ifeq ($(CONFIG_ANDROID_KERNEL), y)
 	EXTRA_CFLAGS += -DANDROID_KERNEL
 endif
 
-# SS Specific Feature
-$(warning Marvell WIFI : $(TARGET_PRODUCT))
-ifneq ($(findstring lt02kidswifiww, $(TARGET_PRODUCT)), lt02kidswifiww)
-	EXTRA_CFLAGS += -DFIRST_SCAN_2G_ONLY
-$(warning Marvell WIFI 2Ghz PRESCAN : enabled)
+#############################################################################
+# Samsung Flags
+#############################################################################
+ifneq ($(filter goldenve3gxx goldenve3gub, $(TARGET_PRODUCT)),)
+#    EXTRA_CFLAGS += -DSEC_FEATURE_L2_ROAMING
+	EXTRA_CFLAGS += -DREDUCE_INIT_SCAN_TIME
 endif
 
-# Enable firmware memory dump for test purpose
-# SHOULD BE REMOVED IN PRODUCTION BUILD
-EXTRA_CFLAGS += -DENABLE_FW_MEM_DUMP
+ifneq ($(filter goya3gxx goyawifixx goyawifiue goya3gub, $(TARGET_PRODUCT)),)
+	EXTRA_CFLAGS += -DREDUCE_INIT_SCAN_TIME
+endif
 
 #############################################################################
 # Make Targets
 #############################################################################
 
-ifneq ($(KERNELRELEASE),)
+#ifneq ($(KERNELRELEASE),)
 
 ifeq ($(CONFIG_WIRELESS_EXT),y)
 ifeq ($(CONFIG_WEXT_PRIV),y)
@@ -369,7 +370,6 @@ endif
 endif
 
 
-
 obj-m := mlan.o
 mlan-objs := $(MLANOBJS)
 MOALOBJS += mlinux/moal_sdio_mmc.o
@@ -377,146 +377,146 @@ obj-m += sd8xxx.o
 sd8xxx-objs := $(MOALOBJS)
 
 # Otherwise we were called directly from the command line; invoke the kernel build system.
-else
+#else
 
-default:
-	$(MAKE) -C $(KERNELDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) modules
+#default:
+#	$(MAKE) -C $(KERNELDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) modules
 
-endif
+#endif
 
 ###############################################################
 
-export		CC LD EXTRA_CFLAGS KERNELDIR
+#export		CC LD EXTRA_CFLAGS KERNELDIR
 
-ifeq ($(CONFIG_STA_SUPPORT),y)
-ifeq ($(CONFIG_UAP_SUPPORT),y)
-.PHONY: mapp/mlanconfig mapp/mlan2040coex mapp/mlanevent mapp/uaputl mapp/mlanutl clean distclean
-else
-.PHONY: mapp/mlanconfig mapp/mlanevent mapp/mlan2040coex mapp/mlanutl clean distclean
-endif
-else
-ifeq ($(CONFIG_UAP_SUPPORT),y)
-.PHONY: mapp/mlanevent mapp/uaputl clean distclean
-endif
-endif
-	@echo "Finished Making Marvell Wlan Linux Driver"
+#ifeq ($(CONFIG_STA_SUPPORT),y)
+#ifeq ($(CONFIG_UAP_SUPPORT),y)
+#.PHONY: mapp/mlanconfig mapp/mlan2040coex mapp/mlanevent mapp/uaputl mapp/mlanutl clean distclean
+#else
+#.PHONY: mapp/mlanconfig mapp/mlanevent mapp/mlan2040coex mapp/mlanutl clean distclean
+#endif
+#else
+#ifeq ($(CONFIG_UAP_SUPPORT),y)
+#.PHONY: mapp/mlanevent mapp/uaputl clean distclean
+#endif
+#endif
+#	@echo "Finished Making Marvell Wlan Linux Driver"
 
-ifeq ($(CONFIG_STA_SUPPORT),y)
-mapp/mlanconfig:
-	$(MAKE) -C $@
-mapp/mlanutl:
-	$(MAKE) -C $@
-mapp/mlan2040coex:
-	$(MAKE) -C $@
-endif
-ifeq ($(CONFIG_UAP_SUPPORT),y)
-mapp/uaputl:
-	$(MAKE) -C $@
-endif
-ifeq ($(CONFIG_WIFI_DIRECT_SUPPORT),y)
-mapp/wifidirectutl:
-	$(MAKE) -C $@
-endif
-mapp/mlanevent:
-	$(MAKE) -C $@
+#ifeq ($(CONFIG_STA_SUPPORT),y)
+#mapp/mlanconfig:
+#	$(MAKE) -C $@
+#mapp/mlanutl:
+#	$(MAKE) -C $@
+#mapp/mlan2040coex:
+#	$(MAKE) -C $@
+#endif
+#ifeq ($(CONFIG_UAP_SUPPORT),y)
+#mapp/uaputl:
+#	$(MAKE) -C $@
+#endif
+#ifeq ($(CONFIG_WIFI_DIRECT_SUPPORT),y)
+#mapp/wifidirectutl:
+#	$(MAKE) -C $@
+#endif
+#mapp/mlanevent:
+#	$(MAKE) -C $@
 
-echo:
+#echo:
 
-build:		echo default
+#build:		echo default
 
-	@if [ ! -d $(BINDIR) ]; then \
-		mkdir $(BINDIR); \
-	fi 
+#	@if [ ! -d $(BINDIR) ]; then \
+#		mkdir $(BINDIR); \
+#	fi 
 
-	cp -f mlan.$(MODEXT) $(BINDIR)/mlan$(DBG).$(MODEXT)
-	cp -f sd8xxx.$(MODEXT) $(BINDIR)/sd8787$(DBG).$(MODEXT)
+#	cp -f mlan.$(MODEXT) $(BINDIR)/mlan$(DBG).$(MODEXT)
+#	cp -f sd8xxx.$(MODEXT) $(BINDIR)/sd87xx$(DBG).$(MODEXT)
 
-ifeq ($(CONFIG_STA_SUPPORT),y)
-	cp -f README $(BINDIR)
-	cp -f README_MLAN $(BINDIR)
-ifneq ($(APPDIR),)
-	$(MAKE) -C mapp/mlanconfig $@ INSTALLDIR=$(BINDIR)
-	$(MAKE) -C mapp/mlanutl $@ INSTALLDIR=$(BINDIR)
-	$(MAKE) -C mapp/mlan2040coex $@ INSTALLDIR=$(BINDIR)
-endif
-endif
-ifeq ($(CONFIG_UAP_SUPPORT),y)
-	cp -f README_UAP $(BINDIR)
-ifneq ($(APPDIR),)
-	$(MAKE) -C mapp/uaputl $@ INSTALLDIR=$(BINDIR)
-endif
-endif
-ifeq ($(CONFIG_WIFI_DIRECT_SUPPORT),y)
-	cp -f README_WIFIDIRECT $(BINDIR)
-	cp -rpf script/wifidirect $(BINDIR)
-ifeq ($(CONFIG_WIFI_DISPLAY_SUPPORT),y)
-	cp -rpf script/wifidisplay $(BINDIR)
-endif
-ifneq ($(APPDIR),)
-	$(MAKE) -C mapp/wifidirectutl $@ INSTALLDIR=$(BINDIR)
-endif
-endif
-ifneq ($(APPDIR),)
-	$(MAKE) -C mapp/mlanevent $@ INSTALLDIR=$(BINDIR)
-endif
+#ifeq ($(CONFIG_STA_SUPPORT),y)
+#	cp -f README $(BINDIR)
+#	cp -f README_MLAN $(BINDIR)
+#ifneq ($(APPDIR),)
+#	$(MAKE) -C mapp/mlanconfig $@ INSTALLDIR=$(BINDIR)
+#	$(MAKE) -C mapp/mlanutl $@ INSTALLDIR=$(BINDIR)
+#	$(MAKE) -C mapp/mlan2040coex $@ INSTALLDIR=$(BINDIR)
+#endif
+#endif
+#ifeq ($(CONFIG_UAP_SUPPORT),y)
+#	cp -f README_UAP $(BINDIR)
+#ifneq ($(APPDIR),)
+#	$(MAKE) -C mapp/uaputl $@ INSTALLDIR=$(BINDIR)
+#endif
+#endif
+#ifeq ($(CONFIG_WIFI_DIRECT_SUPPORT),y)
+#	cp -f README_WIFIDIRECT $(BINDIR)
+#	cp -rpf script/wifidirect $(BINDIR)
+#ifeq ($(CONFIG_WIFI_DISPLAY_SUPPORT),y)
+#	cp -rpf script/wifidisplay $(BINDIR)
+#endif
+#ifneq ($(APPDIR),)
+#	$(MAKE) -C mapp/wifidirectutl $@ INSTALLDIR=$(BINDIR)
+#endif
+#endif
+#ifneq ($(APPDIR),)
+#	$(MAKE) -C mapp/mlanevent $@ INSTALLDIR=$(BINDIR)
+#endif
 
-clean:
-	-find . -name "*.o" -exec rm {} \;
-	-find . -name "*.ko" -exec rm {} \;
-	-find . -name ".*.cmd" -exec rm {} \;
-	-find . -name "*.mod.c" -exec rm {} \;
-	-find . -name "Module.symvers" -exec rm {} \;
-	-find . -name "Module.markers" -exec rm {} \;
-	-find . -name "modules.order" -exec rm {} \;
-	-rm -rf .tmp_versions
-ifneq ($(APPDIR),)
-ifeq ($(CONFIG_STA_SUPPORT),y)
-	$(MAKE) -C mapp/mlanconfig $@
-	$(MAKE) -C mapp/mlanutl $@
-	$(MAKE) -C mapp/mlan2040coex $@
-endif
-ifeq ($(CONFIG_UAP_SUPPORT),y)
-	$(MAKE) -C mapp/uaputl $@
-endif
-ifeq ($(CONFIG_WIFI_DIRECT_SUPPORT),y)
-	$(MAKE) -C mapp/wifidirectutl $@
-endif
-	$(MAKE) -C mapp/mlanevent $@
-endif
+#clean:
+#	-find . -name "*.o" -exec rm {} \;
+#	-find . -name "*.ko" -exec rm {} \;
+#	-find . -name ".*.cmd" -exec rm {} \;
+#	-find . -name "*.mod.c" -exec rm {} \;
+#	-find . -name "Module.symvers" -exec rm {} \;
+#	-find . -name "Module.markers" -exec rm {} \;
+#	-find . -name "modules.order" -exec rm {} \;
+#	-rm -rf .tmp_versions
+#ifneq ($(APPDIR),)
+#ifeq ($(CONFIG_STA_SUPPORT),y)
+#	$(MAKE) -C mapp/mlanconfig $@
+#	$(MAKE) -C mapp/mlanutl $@
+#	$(MAKE) -C mapp/mlan2040coex $@
+#endif
+#ifeq ($(CONFIG_UAP_SUPPORT),y)
+#	$(MAKE) -C mapp/uaputl $@
+#endif
+#ifeq ($(CONFIG_WIFI_DIRECT_SUPPORT),y)
+#	$(MAKE) -C mapp/wifidirectutl $@
+#endif
+#	$(MAKE) -C mapp/mlanevent $@
+#endif
 
-install: default
+#install: default
 
-	cp -f mlan.$(MODEXT) $(INSTALLDIR)/mlan$(DBG).$(MODEXT)
-	cp -f sd8xxx.$(MODEXT) $(INSTALLDIR)/sd8787$(DBG).$(MODEXT)
-	echo "sd8787 Driver Installed"
+#	cp -f mlan.$(MODEXT) $(INSTALLDIR)/mlan$(DBG).$(MODEXT)
+#	cp -f sd8xxx.$(MODEXT) $(INSTALLDIR)/sd87xx$(DBG).$(MODEXT)
+#	echo "sd87xx Driver Installed"
 
-distclean:
-	-find . -name "*.o" -exec rm {} \;
-	-find . -name "*.orig" -exec rm {} \;
-	-find . -name "*.swp" -exec rm {} \;
-	-find . -name "*.*~" -exec rm {} \;
-	-find . -name "*~" -exec rm {} \;
-	-find . -name "*.d" -exec rm {} \;
-	-find . -name "*.a" -exec rm {} \;
-	-find . -name "tags" -exec rm {} \;
-	-find . -name ".*" -exec rm -rf 2> /dev/null \;
-	-find . -name "*.ko" -exec rm {} \;
-	-find . -name ".*.cmd" -exec rm {} \;
-	-find . -name "*.mod.c" -exec rm {} \;
-	-rm -rf .tmp_versions
-ifneq ($(APPDIR),)
-ifeq ($(CONFIG_STA_SUPPORT),y)
-	$(MAKE) -C mapp/mlanconfig $@
-	$(MAKE) -C mapp/mlanutl $@
-	$(MAKE) -C mapp/mlan2040coex $@
-endif
-ifeq ($(CONFIG_UAP_SUPPORT),y)
-	$(MAKE) -C mapp/uaputl $@
-endif
-ifeq ($(CONFIG_WIFI_DIRECT_SUPPORT),y)
-	$(MAKE) -C mapp/wifidirectutl $@
-endif
-	$(MAKE) -C mapp/mlanevent $@
-endif
+#distclean:
+#	-find . -name "*.o" -exec rm {} \;
+#	-find . -name "*.orig" -exec rm {} \;
+#	-find . -name "*.swp" -exec rm {} \;
+#	-find . -name "*.*~" -exec rm {} \;
+#	-find . -name "*~" -exec rm {} \;
+#	-find . -name "*.d" -exec rm {} \;
+#	-find . -name "*.a" -exec rm {} \;
+#	-find . -name "tags" -exec rm {} \;
+#	-find . -name ".*" -exec rm -rf 2> /dev/null \;
+#	-find . -name "*.ko" -exec rm {} \;
+#	-find . -name ".*.cmd" -exec rm {} \;
+#	-find . -name "*.mod.c" -exec rm {} \;
+#	-rm -rf .tmp_versions
+#ifneq ($(APPDIR),)
+#ifeq ($(CONFIG_STA_SUPPORT),y)
+#	$(MAKE) -C mapp/mlanconfig $@
+#	$(MAKE) -C mapp/mlanutl $@
+#	$(MAKE) -C mapp/mlan2040coex $@
+#endif
+#ifeq ($(CONFIG_UAP_SUPPORT),y)
+#	$(MAKE) -C mapp/uaputl $@
+#endif
+#ifeq ($(CONFIG_WIFI_DIRECT_SUPPORT),y)
+#	$(MAKE) -C mapp/wifidirectutl $@
+#endif
+#	$(MAKE) -C mapp/mlanevent $@
+#endif
 
 # End of file

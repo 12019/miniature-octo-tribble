@@ -326,7 +326,7 @@ gckHEAP_Construct(
     OUT gckHEAP * Heap
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckHEAP heap = gcvNULL;
     gctPOINTER pointer = gcvNULL;
 
@@ -472,7 +472,7 @@ gckHEAP_Allocate(
 {
     gctBOOL acquired = gcvFALSE;
     gcskHEAP_PTR heap;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctSIZE_T bytes;
     gcskNODE_PTR node, used, prevFree = gcvNULL;
     gctPOINTER memory = gcvNULL;
@@ -763,7 +763,7 @@ gckHEAP_Free(
     )
 {
     gcskNODE_PTR node;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Heap=0x%x Memory=0x%x", Heap, Memory);
 

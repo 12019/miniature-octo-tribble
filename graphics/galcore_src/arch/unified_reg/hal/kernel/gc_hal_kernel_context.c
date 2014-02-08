@@ -440,7 +440,7 @@ _gckCntxBuffer_Allocate(
     IN gcsCONTEXT_PTR buffer
     )
 {
-        gceSTATUS status;
+        gceSTATUS status = gcvSTATUS_OK;
 #ifdef CNTBUF_OLDLOGIC
         gctPOINTER pointer = gcvNULL;
 
@@ -491,7 +491,7 @@ _gckCntxBuffer_Free(
     IN gcsCONTEXT_PTR buffer
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Context=0x%08X buffer=0x%08X", Context, buffer);
 
@@ -1101,7 +1101,7 @@ gckCONTEXT_Construct(
     OUT gckCONTEXT * Context
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckCONTEXT context = gcvNULL;
     gctSIZE_T allocationSize;
     gctUINT i;
@@ -1390,7 +1390,7 @@ gckCONTEXT_Destroy(
     IN gckCONTEXT Context
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Context=0x%08X", Context);
 

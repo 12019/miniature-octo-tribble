@@ -45,7 +45,7 @@ __ATTR(_name, 0644, show_##_name, store_##_name)
 { \
     if((_value < _min) || (_value > _max)) \
     { \
-        printk("input value %u is out of range [%u, %u]\n", _value, _min, _max); \
+        printk("input value %d is out of range [%d, %d]\n", _value, _min, _max); \
         return -EDOM; \
     } \
 }

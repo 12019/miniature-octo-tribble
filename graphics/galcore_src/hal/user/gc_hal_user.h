@@ -388,15 +388,6 @@ gcoHARDWARE_LoadShaders(
     IN gcsHINT_PTR Hints
     );
 
-gceSTATUS
-gcoHARDWARE_IsHWResolveAvailable(
-    IN gcsSURF_INFO_PTR SrcInfo,
-    IN gcsSURF_INFO_PTR DestInfo,
-    IN gcsPOINT_PTR SrcOrigin,
-    IN gcsPOINT_PTR DestOrigin,
-    IN gcsPOINT_PTR RectSize
-    );
-
 /* Resolve. */
 gceSTATUS
 gcoHARDWARE_ResolveRect(

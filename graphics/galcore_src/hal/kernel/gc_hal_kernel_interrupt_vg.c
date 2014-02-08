@@ -100,7 +100,7 @@ _ProcessInterrupt(
     )
 #endif
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 triggered;
     gctUINT i;
 
@@ -203,7 +203,7 @@ _MainInterruptHandler(
     gctTHREADFUNCPARAMETER ThreadParameter
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckVGINTERRUPT interrupt;
 
 #if gcmENABLE_INTERRUPT_STATISTICS
@@ -335,7 +335,7 @@ _StopInterruptHandler(
     gckVGINTERRUPT Interrupt
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -410,7 +410,7 @@ gckVGINTERRUPT_Construct(
     OUT gckVGINTERRUPT * Interrupt
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckVGINTERRUPT interrupt = gcvNULL;
 
     gcmkHEADER_ARG("Kernel=0x%x Interrupt=0x%x", Kernel, Interrupt);
@@ -491,7 +491,7 @@ gckVGINTERRUPT_Destroy(
     IN gckVGINTERRUPT Interrupt
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Interrupt=0x%x", Interrupt);
 
@@ -652,7 +652,7 @@ gckVGINTERRUPT_Enable(
     IN gctINTERRUPT_HANDLER Handler
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctINT32 i;
 
     gcmkHEADER_ARG("Interrupt=0x%x Id=0x%x Handler=0x%x", Interrupt, Id, Handler);
@@ -777,7 +777,7 @@ gckVGINTERRUPT_Enque(
     )
 #endif
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 triggered;
 
     gcmkHEADER_ARG("Interrupt=0x%x", Interrupt);

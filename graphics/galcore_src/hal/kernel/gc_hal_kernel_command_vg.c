@@ -103,7 +103,7 @@ _FlushMMU(
     IN gckVGCOMMAND Command
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 oldValue;
     gckVGHARDWARE hardware = Command->hardware;
 
@@ -430,7 +430,7 @@ _AllocateTaskContainer(
     OUT gcsTASK_CONTAINER_PTR * Buffer
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Command=0x%x Size=0x%x, Buffer ==0x%x", Command, Size, Buffer);
 
@@ -675,7 +675,7 @@ _ScheduleTasks(
     IN gctUINT8_PTR PreviousEnd
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -887,7 +887,7 @@ _HardwareToKernel(
     OUT gctPOINTER * KernelPointer
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckVIDMEM memory;
     gctUINT32 offset;
 #if gcdDYNAMIC_MAP_RESERVED_MEMORY
@@ -1077,7 +1077,7 @@ _FreeLinear(
     IN gcuVIDMEM_NODE_PTR Node
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -1190,7 +1190,7 @@ _FreeCommandBuffer(
     IN gcsCMDBUFFER_PTR CommandBuffer
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     /* Free the buffer. */
     status = _FreeLinear(Kernel, CommandBuffer->node);
@@ -1417,7 +1417,7 @@ _TaskIncrement(
     gcsBLOCK_TASK_ENTRY_PTR TaskHeader
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -1461,7 +1461,7 @@ _TaskDecrement(
     gcsBLOCK_TASK_ENTRY_PTR TaskHeader
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -1505,7 +1505,7 @@ _TaskSignal(
     gcsBLOCK_TASK_ENTRY_PTR TaskHeader
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -1542,7 +1542,7 @@ _TaskLockdown(
     gcsBLOCK_TASK_ENTRY_PTR TaskHeader
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32_PTR userCounter   = gcvNULL;
     gctUINT32_PTR kernelCounter = gcvNULL;
     gctSIGNAL signal            = gcvNULL;
@@ -1639,7 +1639,7 @@ _TaskUnlockVideoMemory(
     gcsBLOCK_TASK_ENTRY_PTR TaskHeader
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -1673,7 +1673,7 @@ _TaskFreeVideoMemory(
     gcsBLOCK_TASK_ENTRY_PTR TaskHeader
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -1702,7 +1702,7 @@ _TaskFreeContiguousMemory(
     gcsBLOCK_TASK_ENTRY_PTR TaskHeader
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -1733,7 +1733,7 @@ _TaskUnmapUserMemory(
     gcsBLOCK_TASK_ENTRY_PTR TaskHeader
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -2057,7 +2057,7 @@ _ExecuteStaticCommandBuffer(
     IN gcsKERNEL_CMDQUEUE_PTR Entry
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -2129,7 +2129,7 @@ _ExecuteLastStaticCommandBuffer(
     IN gcsKERNEL_CMDQUEUE_PTR Entry
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -2190,7 +2190,7 @@ _ExecuteDynamicCommandBuffer(
     IN gcsKERNEL_CMDQUEUE_PTR Entry
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -2260,7 +2260,7 @@ _ExecuteLastDynamicCommandBuffer(
     IN gcsKERNEL_CMDQUEUE_PTR Entry
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -2305,7 +2305,7 @@ _FreeKernelCommandBuffer(
     IN gcsKERNEL_CMDQUEUE_PTR Entry
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     /* Free the command buffer. */
     status = _FreeCommandBuffer(Kernel, Entry->commandBuffer);
@@ -2546,7 +2546,7 @@ _LockCurrentQueue(
     OUT gctUINT_PTR EntryCount
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -2599,7 +2599,7 @@ _UnlockCurrentQueue(
     IN gctUINT EntryCount
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     do
     {
@@ -3248,7 +3248,7 @@ gckVGCOMMAND_Allocate(
     OUT gctPOINTER * Data
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Command=0x%x Size=0x%x CommandBuffer=0x%x Data=0x%x",
         Command, Size, CommandBuffer, Data);
@@ -3278,7 +3278,7 @@ gckVGCOMMAND_Free(
     IN gcsCMDBUFFER_PTR CommandBuffer
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Command=0x%x CommandBuffer=0x%x",
         Command, CommandBuffer);
@@ -3301,7 +3301,7 @@ gckVGCOMMAND_Execute(
     IN gcsCMDBUFFER_PTR CommandBuffer
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Command=0x%x CommandBuffer=0x%x",
         Command, CommandBuffer);

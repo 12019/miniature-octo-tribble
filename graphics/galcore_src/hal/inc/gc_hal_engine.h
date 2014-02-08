@@ -377,15 +377,6 @@ gcoSURF_GetRTSignal(
     OUT gctSIGNAL * resolveSubmittedSignal
     );
 
-gceSTATUS
-gcoSURF_IsHWResolveAvailable(
-    IN gcoSURF SrcSurface,
-    IN gcoSURF DestSurface,
-    IN gcsPOINT_PTR SrcOrigin,
-    IN gcsPOINT_PTR DestOrigin,
-    IN gcsPOINT_PTR RectSize
-    );
-
 /* Resolve rectangular area of a surface. */
 gceSTATUS
 gcoSURF_ResolveRect(
@@ -1454,6 +1445,16 @@ typedef enum _gceTEXTURE_FACE
 }
 gceTEXTURE_FACE;
 
+#if gcdFORCE_MIPMAP
+typedef enum
+{
+    gcvForceMipDisabled  = 0,
+    gcvForceMipEnable    = 1,
+    gcvForceMipGenerated = 2,
+    gcvForceMipNever     = 3,
+}gceFORCE_MIPMAP;
+#endif
+
 typedef struct _gcsTEXTURE
 {
     /* Addressing modes. */
@@ -1471,11 +1472,15 @@ typedef struct _gcsTEXTURE
     gctUINT                     anisoFilter;
     gctBOOL                     forceTopLevel;
     gctBOOL                     autoMipmap;
-
+#if gcdFORCE_MIPMAP
+    gceFORCE_MIPMAP             forceMipmap;
+#endif
     /* Level of detail. */
     gctFIXED_POINT              lodBias;
     gctFIXED_POINT              lodMin;
     gctFIXED_POINT              lodMax;
+
+    gctBOOL                     forceDisableRoundUV;
 }
 gcsTEXTURE, * gcsTEXTURE_PTR;
 
@@ -1526,6 +1531,19 @@ gctINT gcoTEXTURE_GetMaxLOD(
     IN gctINT Width,
     IN gctINT Height
     );
+
+#if gcdFORCE_MIPMAP
+gceSTATUS
+gcoTEXTURE_DestroyForceMipmap(
+    IN gcoTEXTURE Texture
+    );
+
+gceSTATUS
+gcoTEXTURE_GetMipLevels(
+    IN gcoTEXTURE Texture,
+    OUT gctINT * levels
+    );
+#endif
 
 /* Replace a mipmap in gcoTEXTURE object. */
 gceSTATUS

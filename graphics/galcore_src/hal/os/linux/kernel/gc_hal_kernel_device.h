@@ -109,7 +109,7 @@ typedef struct _gckGALDEVICE
     /* GC memory profile*/
     gctSIZE_T           reservedMem;
     gctINT32            vidMemUsage;
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     gctSIZE_T           reservedPmemMem;
     gctINT32            pmemUsage;
 #endif
@@ -204,7 +204,7 @@ gceSTATUS gckGALDEVICE_Construct(
     IN gctSIZE_T RegisterMemSizeVG,
     IN gctUINT32 ContiguousBase,
     IN gctSIZE_T ContiguousSize,
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     IN gctSIZE_T PmemSize,
 #endif
     IN gctSIZE_T BankSize,

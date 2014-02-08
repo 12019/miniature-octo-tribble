@@ -24,22 +24,30 @@
 
 #ifndef __gc_hal_options_h_
 #define __gc_hal_options_h_
-/* macro to define wmmx support */
 
-/* Use pmem flag */
+/* pmem or ion definition. */
+#define gcdMEM_TYPE_NONE                        0x0
+#define gcdMEM_TYPE_PMEM                        0x1
+#define gcdMEM_TYPE_ION                         0x2
+
 #if (defined ANDROID || defined X11) && !defined(__QNXNTO__)
 #include <linux/version.h>
-#define MRVL_VIDEO_MEMORY_USE_PMEM              1
-#define MRVL_PMEM_MINOR_FLAG                    1
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0))
-#define MRVL_VIDEO_MEMORY_USE_ION               1
-#endif
-
+#   if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0))
+#       define MRVL_VIDEO_MEMORY_USE_TYPE       gcdMEM_TYPE_ION
+#   else
+#       define MRVL_VIDEO_MEMORY_USE_TYPE       gcdMEM_TYPE_PMEM
+#       define MRVL_PMEM_MINOR_FLAG             1
+#   endif
+#   if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,39))
+#       define gcdMEM_TYPE_IONAF_3_4_39      1
+#   else
+#       define gcdMEM_TYPE_IONAF_3_4_39      0
+#   endif
 #else
-#define MRVL_VIDEO_MEMORY_USE_PMEM              0
+#define MRVL_VIDEO_MEMORY_USE_TYPE              gcdMEM_TYPE_NONE
 #endif
 
+/* macro to define wmmx support */
 #ifdef SUPPORT_WMMX
 #define MRVL_SUPPORT_WMMX                   1
 #else
@@ -70,6 +78,18 @@
 #ifndef USE_NEW_LINUX_SIGNAL
 #   define USE_NEW_LINUX_SIGNAL                 0
 #endif
+
+/*
+    OPTION_ENABLE_GPUTEX
+
+        This define enables gpu tex.
+*/
+#ifdef CONFIG_ENABLE_GPUTEX
+#define MRVL_ENABLE_GPUTEX                 1
+#else
+#define MRVL_ENABLE_GPUTEX                 0
+#endif
+
 
 /*
     VIVANTE_PROFILER
@@ -143,6 +163,30 @@
         The version of the command buffer and task manager.
 */
 #define COMMAND_PROCESSOR_VERSION               1
+
+/*
+    gcdDUMP_KEY
+
+        Set this to a string that appears in 'cat /proc/<pid>/cmdline'. E.g. 'camera'.
+        HAL will create dumps for the processes matching this key.
+*/
+#ifndef gcdDUMP_KEY
+#   define gcdDUMP_KEY                          "process"
+#endif
+
+/*
+    gcdDUMP_PATH
+
+        The dump file location. Some processes cannot write to the sdcard.
+        Try apps' data dir, e.g. /data/data/com.android.launcher
+*/
+#ifndef gcdDUMP_PATH
+#if defined(ANDROID)
+#   define gcdDUMP_PATH                         "/mnt/sdcard/"
+#else
+#   define gcdDUMP_PATH                         "./"
+#endif
+#endif
 
 /*
     gcdDUMP
@@ -863,7 +907,7 @@
 #endif
 
 /* Enable 4k mmu config for big panel LCD flicker. */
-#define gcdENABLE_4K_MMU_CONGIG                 0
+#define gcdENABLE_4K_MMU_CONGIG                 1
 
 /* Enable set limited outstanding for big panel LCD flicker. */
 #define gcdENABLE_SET_LIMITED_OUTSTANDING       1
@@ -1083,6 +1127,12 @@
 #define MRVL_CONFIG_ENABLE_GPUFREQ              0
 #endif
 
+#if (defined ANDROID) && (MRVL_PLATFORM_988 || MRVL_PLATFORM_PXA1088) && (!defined CONFIG_MACH_LT02)
+#define MRVL_CONFIG_ENABLE_QOS_SUPPORT          1
+#else
+#define MRVL_CONFIG_ENABLE_QOS_SUPPORT          0
+#endif
+
 /*
     Reference count for HW clock/power enable/disable:
 
@@ -1152,14 +1202,13 @@
 #endif
 
 /*
-* Disable RoundUV (add 1/64 to u,v) when setting SampleMode register.
-*/
-#define MRVL_DISABLE_TEXTURE_ROUND_UV           1
-
-/*
 * Tune OPF using gcuSet() interface.
 */
 #define MRVL_GCU_TUNING_OPF                     0
+
+
+#define MRVL_OLD_FLUSHCACHE                   0
+#define MRVL_GC_FLUSHCACHE_PFN                1
 
 /*
 *  Definitions for vendor, renderer and version strings
@@ -1183,7 +1232,7 @@
 
 #define _OPENVG_VERSION_STRING_                 "OpenVG 1.1"
 
-#define _GC_VERSION_STRING_                     "GC Ver-988-JB-R4-RC2-GC20"
+#define _GC_VERSION_STRING_                     "GC Ver SS_rls_pxa988_JB42_R1_RC2_GC13.10"
 
 #ifndef gcdSYNC
 #   define gcdSYNC                              1
@@ -1200,5 +1249,4 @@
 #   define gcdDVFS_ANAYLSE_WINDOW                4
 #   define gcdDVFS_POLLING_TIME                  (gcdDVFS_ANAYLSE_WINDOW * 4)
 #endif
-
 #endif /* __gc_hal_options_h_ */

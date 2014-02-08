@@ -50,7 +50,7 @@ _FreeMemory(
     IN gctPOINTER Logical,
     IN gctPHYS_ADDR Physical)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Device=0x%x Logical=0x%x Physical=0x%x",
                    Device, Logical, Physical);
@@ -78,7 +78,7 @@ _AllocateContiguousMemory(gckGALDEVICE device,
     IN gctSIZE_T BankSize
  )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 physAddr;
 
     status = gckOS_AllocateVidmemFromMemblock(device->os,
@@ -122,7 +122,7 @@ _AllocateContiguousMemory(gckGALDEVICE device,
     IN gctSIZE_T BankSize
  )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 physAddr;
 
     if (ContiguousBase == 0)
@@ -249,7 +249,7 @@ OnError:
 \******************************************************************************/
 static irqreturn_t isrRoutine(int irq, void *ctxt)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckGALDEVICE device;
 
     device = (gckGALDEVICE) ctxt;
@@ -302,7 +302,7 @@ static int threadRoutine(void *ctxt)
 
 static irqreturn_t isrRoutine2D(int irq, void *ctxt)
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckGALDEVICE device;
 
     device = (gckGALDEVICE) ctxt;
@@ -356,7 +356,7 @@ static int threadRoutine2D(void *ctxt)
 static irqreturn_t isrRoutineVG(int irq, void *ctxt)
 {
 #if gcdENABLE_VG
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckGALDEVICE device;
 
     device = (gckGALDEVICE) ctxt;
@@ -510,7 +510,7 @@ gckGALDEVICE_Construct(
     IN gctSIZE_T RegisterMemSizeVG,
     IN gctUINT32 ContiguousBase,
     IN gctSIZE_T ContiguousSize,
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     IN gctSIZE_T PmemSize,
 #endif
     IN gctSIZE_T BankSize,
@@ -529,7 +529,7 @@ gckGALDEVICE_Construct(
     struct resource* mem_region;
     gctUINT32 physical;
     gckGALDEVICE device;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctINT32 i;
     gceHARDWARE_TYPE type;
     gckDB sharedDB = gcvNULL;
@@ -795,7 +795,7 @@ gckGALDEVICE_Construct(
     device->irqLines[gcvCORE_2D]    = IrqLine2D;
     device->irqLines[gcvCORE_VG]    = IrqLineVG;
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     for (i = 0; i < gcdMAX_GPU_COUNT; i++)
     {
         if(device->kernels[i] != gcvNULL)
@@ -935,7 +935,7 @@ gckGALDEVICE_Construct(
     /* Initialize GC memory profile*/
     device->reservedMem                     = device->contiguousSize;
     device->vidMemUsage                     = 0;
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     device->reservedPmemMem                 = PmemSize;
     device->pmemUsage                       = 0;
     gcmkPRINT("[galcore] GC use pmem as video memory is limited to Size = 0x%08x\n", (gctUINT32)device->reservedPmemMem);
@@ -1155,7 +1155,7 @@ gckGALDEVICE_Setup_ISR(
     IN gckGALDEVICE Device
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctINT ret;
 
     gcmkHEADER_ARG("Device=0x%x", Device);
@@ -1213,7 +1213,7 @@ gckGALDEVICE_Setup_ISR_2D(
     IN gckGALDEVICE Device
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctINT ret;
 
     gcmkHEADER_ARG("Device=0x%x", Device);
@@ -1271,7 +1271,7 @@ gckGALDEVICE_Setup_ISR_VG(
     IN gckGALDEVICE Device
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctINT ret;
 
     gcmkHEADER_ARG("Device=0x%x", Device);
@@ -1445,7 +1445,7 @@ gckGALDEVICE_Start_Threads(
     IN gckGALDEVICE Device
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     struct task_struct * task;
 
     gcmkHEADER_ARG("Device=0x%x", Device);
@@ -1603,7 +1603,7 @@ gckGALDEVICE_Start(
     IN gckGALDEVICE Device
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Device=0x%x", Device);
 
@@ -1677,7 +1677,7 @@ gckGALDEVICE_Stop(
     gckGALDEVICE Device
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Device=0x%x", Device);
 

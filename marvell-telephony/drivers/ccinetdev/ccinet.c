@@ -46,7 +46,12 @@
 
 #define MAX_CID_NUM    8
 
+#define SIOCUSECCINET    SIOCDEVPRIVATE
+#define SIOCRELEASECCINET (SIOCDEVPRIVATE+1)
+
 struct ccinet_priv {
+	unsigned char is_used;
+	unsigned char sim_id;
 	unsigned char cid;
 	int status;                                             /* indicate status of the interrupt */
 	spinlock_t lock;                                        /* spinlock use to protect critical session	*/
@@ -133,7 +138,7 @@ static int ccinet_tx(struct sk_buff* skb, struct net_device* netdev)
 	/* strip Ethernet header */
 	skb_pull(skb, ETH_HLEN);
 
-	sendPSDData(devobj->cid, skb);
+	sendPSDData(devobj->cid | devobj->sim_id << 31, skb);
 	 
 	/* update network statistics */
 	devobj->net_stats.tx_packets++;
@@ -224,6 +229,64 @@ static int validate_addr(struct net_device* netdev)
 {
 	ENTER();
 	return 0;
+}
+
+static int ccinet_ioctl(struct net_device *netdev, struct ifreq *rq, int cmd)
+{
+	int rc = 0;
+	struct ccinet_priv *priv = netdev_priv(netdev);
+
+	switch (cmd) {
+	case SIOCUSECCINET:
+	{
+		int sim_id;
+		if (copy_from_user(&sim_id, rq->ifr_data, sizeof(sim_id))) {
+			rc = -EFAULT;
+			break;
+		}
+		spin_lock(&priv->lock);
+		if (priv->is_used) {
+			printk(KERN_ERR"%s: SIM%d has used cid%d, SIM%d request fail\n", __FUNCTION__, (int)priv->sim_id + 1, (int)priv->cid, sim_id+1);
+			rc = -EFAULT;
+		} else {
+			priv->sim_id = sim_id;
+			priv->is_used = 1;
+			printk("%s: SIM%d now use cid%d\n", __FUNCTION__, sim_id + 1, (int)priv->cid);
+		}
+		spin_unlock(&priv->lock);
+	}
+	break;
+
+	case SIOCRELEASECCINET:
+	{
+		int sim_id;
+		if (copy_from_user(&sim_id, rq->ifr_data, sizeof(sim_id))) {
+			rc = -EFAULT;
+			break;
+		}
+		spin_lock(&priv->lock);
+		if (priv->is_used) {
+			if (sim_id != priv->sim_id) {
+				spin_unlock(&priv->lock);
+				printk(KERN_ERR "%s: SIM%d want release cid%d, but it's used by SIM%d\n", __FUNCTION__, sim_id + 1, priv->cid, (int)priv->sim_id + 1);
+				rc = -EFAULT;
+			} else {
+				priv->sim_id = 0;
+				priv->is_used = 0;
+				spin_unlock(&priv->lock);
+				printk("%s: SIM%d now release cid%d\n", __FUNCTION__, sim_id + 1, (int)priv->cid);
+			}
+		} else {
+			spin_unlock(&priv->lock);
+			printk(KERN_ERR "%s: SIM%d want release cid%d, but not used before\n", __FUNCTION__, sim_id + 1, priv->cid, (int)priv->sim_id + 1);
+		}
+		break;
+	}
+
+	default:
+		rc = -EOPNOTSUPP;
+	}
+	return rc;
 }
 
 #ifdef DATA_IND_BUFFERLIST
@@ -352,7 +415,8 @@ static const struct net_device_ops cci_netdev_ops = {
 	.ndo_start_xmit 	= ccinet_tx,
 	.ndo_tx_timeout		= ccinet_tx_timeout,
 	.ndo_get_stats 	= ccinet_get_stats,
-	.ndo_validate_addr	= validate_addr
+	.ndo_validate_addr	= validate_addr,
+	.ndo_do_ioctl = ccinet_ioctl,
 };
 
 static void ccinet_setup(struct net_device* netdev)

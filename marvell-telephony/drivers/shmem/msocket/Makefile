@@ -2,7 +2,7 @@
 #  it under the terms of the GNU General Public License version 2 as
 #  published by the Free Software Foundation.
 # (C) Copyright 2007 Marvell International Ltd.
-
+BUILDROOT = $(srctree)/drivers/marvell/marvell-telephony/drivers
 TARGET = msocketk
 
 $(TARGET)-objs := portqueue.o shm.o msocket.o acipcd.o data_path.o direct_rb.o
@@ -21,21 +21,21 @@ EXTRA_CFLAGS += -DEXPORT_SYMTAB \
 	
 	#-DTX_TASK_ENABLE \
 
-KBUILD_EXTRA_SYMBOLS = $(BUILDROOT)/cp_load/Module.symvers
+#KBUILD_EXTRA_SYMBOLS = $(BUILDROOT)/cp_load/Module.symvers
 
-all: modules
+#all: modules
 
-ifneq ($(KERNELRELEASE),)
+#ifneq ($(KERNELRELEASE),)
  
 obj-m	:= $(TARGET).o
 #CC =arm-linux-gcc
 						     
-else
+#else
 
-modules: 
-	$(MAKE) -C $(KERNELDIR) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) M=$(shell pwd) modules
-endif
+#modules: 
+#	$(MAKE) -C $(KERNELDIR) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) M=$(shell pwd) modules
+#endif
 
-clean:
-	rm -rf msocket.o
-	rm -rf *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions *.bak *.o *.symvers *.order *.mod
+#clean:
+#	rm -rf msocket.o
+#	rm -rf *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions *.bak *.o *.symvers *.order *.mod

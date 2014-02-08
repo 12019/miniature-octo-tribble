@@ -234,7 +234,8 @@ gcoOS_GetDisplayInfoEx(
     );
 
 gceSTATUS
-gcoOS_GetNextDisplayInfoEx(
+gcoOS_GetNextDisplayInfoExByIndex(
+    IN gctINT Index,
     IN HALNativeDisplayType Display,
     IN HALNativeWindowType Window,
     IN gctUINT DisplayInfoSize,

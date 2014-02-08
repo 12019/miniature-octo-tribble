@@ -229,7 +229,9 @@ woal_get_active_intf_freq(moal_private * priv)
 			    (handle->priv[i]->bss_type == priv->bss_type))
 				return ieee80211_channel_to_frequency(handle->
 								      priv[i]->
-								      channel,
+								      channel
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39) || defined(COMPAT_WIRELESS)
+								      ,
 								      (handle->
 								       priv[i]->
 								       channel
@@ -237,7 +239,10 @@ woal_get_active_intf_freq(moal_private * priv)
 								       14 ?
 								       IEEE80211_BAND_2GHZ
 								       :
-								       IEEE80211_BAND_5GHZ));
+								       IEEE80211_BAND_5GHZ)
+#endif
+					);
+
 		}
 #endif
 #ifdef UAP_SUPPORT
@@ -246,7 +251,9 @@ woal_get_active_intf_freq(moal_private * priv)
 			    (handle->priv[i]->bss_type == priv->bss_type))
 				return ieee80211_channel_to_frequency(handle->
 								      priv[i]->
-								      channel,
+								      channel
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 39) || defined(COMPAT_WIRELESS)
+								      ,
 								      (handle->
 								       priv[i]->
 								       channel
@@ -254,7 +261,9 @@ woal_get_active_intf_freq(moal_private * priv)
 								       14 ?
 								       IEEE80211_BAND_2GHZ
 								       :
-								       IEEE80211_BAND_5GHZ));
+								       IEEE80211_BAND_5GHZ)
+#endif
+					);
 		}
 #endif
 	}
@@ -324,6 +333,31 @@ woal_cfg80211_set_key(moal_private * priv, t_u8 is_enable_wep,
 
 	ENTER();
 
+#ifdef UAP_CFG80211
+#ifdef UAP_SUPPORT
+	if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) {
+		if (is_enable_wep) {
+			PRINTM(MIOCTL, "Enable UAP default key=%d\n",
+			       key_index);
+			priv->uap_wep_key[key_index].is_default = MTRUE;
+			goto done;
+		}
+		if (key && key_len &&
+		    ((cipher == WLAN_CIPHER_SUITE_WEP40) ||
+		     (cipher == WLAN_CIPHER_SUITE_WEP104))) {
+			priv->uap_wep_key[key_index].length = key_len;
+			memcpy(priv->uap_wep_key[key_index].key, key, key_len);
+			priv->cipher = cipher;
+			priv->uap_wep_key[key_index].key_index = key_index;
+			priv->uap_wep_key[key_index].is_default = MFALSE;
+			PRINTM(MIOCTL, "Set UAP WEP key: key_index=%d len=%d\n",
+			       key_index, key_len);
+			goto done;
+		}
+	}
+#endif
+#endif
+
 	/* Allocate an IOCTL request buffer */
 	req = woal_alloc_mlan_ioctl_req(sizeof(mlan_ds_sec_cfg));
 	if (req == NULL) {
@@ -341,24 +375,6 @@ woal_cfg80211_set_key(moal_private * priv, t_u8 is_enable_wep,
 		sec->param.encrypt_key.key_index = key_index;
 		sec->param.encrypt_key.is_current_wep_key = MTRUE;
 	} else if (!disable) {
-#ifdef UAP_CFG80211
-#ifdef UAP_SUPPORT
-		if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_UAP) {
-			if (key && key_len) {
-				priv->key_len = key_len;
-				memcpy(priv->key_material, key, key_len);
-				priv->cipher = cipher;
-				priv->key_index = key_index;
-			}
-			if ((cipher == WLAN_CIPHER_SUITE_WEP40) ||
-			    (cipher == WLAN_CIPHER_SUITE_WEP104)) {
-				PRINTM(MIOCTL, "Set WEP key\n");
-				ret = MLAN_STATUS_SUCCESS;
-				goto done;
-			}
-		}
-#endif
-#endif
 		if (cipher != WLAN_CIPHER_SUITE_WEP40 &&
 		    cipher != WLAN_CIPHER_SUITE_WEP104 &&
 		    cipher != WLAN_CIPHER_SUITE_TKIP &&
@@ -422,14 +438,10 @@ woal_cfg80211_set_key(moal_private * priv, t_u8 is_enable_wep,
 	}
 
 	/* Send IOCTL request to MLAN */
-	if (MLAN_STATUS_SUCCESS !=
-	    woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT)) {
-		ret = MLAN_STATUS_FAILURE;
-		goto done;
-	}
+	ret = woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT);
 
 done:
-	if (req && (ret != MLAN_STATUS_PENDING))
+	if (ret != MLAN_STATUS_PENDING)
 		kfree(req);
 	LEAVE();
 	return ret;
@@ -908,6 +920,7 @@ woal_cfg80211_change_virtual_intf(struct wiphy *wiphy,
 #if defined(STA_SUPPORT) && defined(UAP_SUPPORT)
 	t_u8 bss_role;
 #endif
+	mlan_status status = MLAN_STATUS_SUCCESS;
 
 	ENTER();
 
@@ -915,6 +928,15 @@ woal_cfg80211_change_virtual_intf(struct wiphy *wiphy,
 		PRINTM(MINFO, "Already set to required type\n");
 		goto done;
 	}
+#ifdef UAP_SUPPORT
+	if ((priv->bss_type == MLAN_BSS_TYPE_UAP) && (priv->bss_index > 0)) {
+		priv->wdev->iftype = type;
+		PRINTM(MMSG, "%s: Skip change virtual intf on uap: type=%d\n",
+		       dev->name, type);
+		goto done;
+	}
+#endif
+
 	PRINTM(MIOCTL, "%s: change virturl intf=%d\n", dev->name, type);
 #if defined(WIFI_DIRECT_SUPPORT)
 #if LINUX_VERSION_CODE >= WIFI_DIRECT_KERNEL_VERSION
@@ -1094,14 +1116,14 @@ woal_cfg80211_change_virtual_intf(struct wiphy *wiphy,
 	if (ret)
 		goto done;
 
-	if (MLAN_STATUS_SUCCESS !=
-	    woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT)) {
+	status = woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT);
+	if (MLAN_STATUS_SUCCESS != status) {
 		ret = -EFAULT;
 		goto done;
 	}
 
 done:
-	if (req)
+	if (status != MLAN_STATUS_PENDING)
 		kfree(req);
 	LEAVE();
 	return ret;
@@ -1334,18 +1356,17 @@ woal_cfg80211_set_default_key(struct wiphy *wiphy,
 	mlan_bss_info bss_info;
 
 	ENTER();
-
-	woal_get_bss_info(priv, MOAL_IOCTL_WAIT, &bss_info);
-	if (!bss_info.wep_status) {
-		LEAVE();
-		return ret;
+	if (GET_BSS_ROLE(priv) == MLAN_BSS_ROLE_STA) {
+		woal_get_bss_info(priv, MOAL_IOCTL_WAIT, &bss_info);
+		if (!bss_info.wep_status) {
+			LEAVE();
+			return ret;
+		}
 	}
-
 	if (MLAN_STATUS_SUCCESS !=
 	    woal_cfg80211_set_wep_keys(priv, NULL, 0, key_index)) {
 		ret = -EFAULT;
 	}
-
 	LEAVE();
 	return ret;
 }
@@ -1489,13 +1510,15 @@ woal_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
 	rate_cfg->bitmap_rates[2] = mask->control[band].mcs[0];
 #endif
 
-	if (MLAN_STATUS_SUCCESS !=
-	    woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT)) {
+	status = woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT);
+	if (MLAN_STATUS_SUCCESS != status) {
 		ret = -EFAULT;
 		goto done;
 	}
 
 done:
+	if (status != MLAN_STATUS_PENDING)
+		kfree(req);
 	LEAVE();
 	return ret;
 }
@@ -1517,6 +1540,7 @@ woal_cfg80211_set_antenna(struct wiphy *wiphy, u32 tx_ant, u32 rx_ant)
 	moal_private *priv = NULL;
 	mlan_ds_radio_cfg *radio = NULL;
 	mlan_ioctl_req *req = NULL;
+	mlan_status status = MLAN_STATUS_SUCCESS;
 	int ret = 0;
 
 	ENTER();
@@ -1543,14 +1567,14 @@ woal_cfg80211_set_antenna(struct wiphy *wiphy, u32 tx_ant, u32 rx_ant)
 	req->action = MLAN_ACT_SET;
 	radio->param.antenna = tx_ant;
 
-	if (MLAN_STATUS_SUCCESS !=
-	    woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT)) {
+	status = woal_request_ioctl(priv, req, MOAL_IOCTL_WAIT);
+	if (MLAN_STATUS_SUCCESS != status) {
 		ret = -EFAULT;
 		goto done;
 	}
 
 done:
-	if (req)
+	if (status != MLAN_STATUS_PENDING)
 		kfree(req);
 	/* Driver must return -EINVAL to cfg80211 */
 	if (ret)
@@ -1776,8 +1800,8 @@ woal_cfg80211_mgmt_tx(struct wiphy *wiphy,
 
 	if (buf == NULL || len == 0) {
 		PRINTM(MERROR, "woal_cfg80211_mgmt_tx() corrupt data\n");
-		ret = -EFAULT;
-		goto done;
+		LEAVE();
+		return -EFAULT;
 	}
 
 	/* If the packet is probe response, that means we are in listen phase,
@@ -1809,27 +1833,21 @@ woal_cfg80211_mgmt_tx(struct wiphy *wiphy,
 		/* With sd8777 We have difficulty to receive response packet in
 		   500ms */
 #define MGMT_TX_DEFAULT_WAIT_TIME	   1500
-		/** cancel previous remain on channel */
-		if (priv->phandle->remain_on_channel) {
+		if (priv->phandle->remain_on_channel)
 			remain_priv =
 				priv->phandle->priv[priv->phandle->
 						    remain_bss_index];
-			if (!remain_priv) {
-				PRINTM(MERROR,
-				       "mgmt_tx:Wrong remain_bss_index=%d\n",
-				       priv->phandle->remain_bss_index);
-				ret = -EFAULT;
-				goto done;
+		/** cancel previous remain on channel */
+		if (priv->phandle->remain_on_channel && remain_priv) {
+			if ((priv->phandle->chan.center_freq !=
+			     chan->center_freq)
+				) {
+				if (woal_cfg80211_remain_on_channel_cfg
+				    (remain_priv, MOAL_IOCTL_WAIT, MTRUE,
+				     &channel_status, NULL, 0, 0))
+					PRINTM(MERROR,
+					       "mgmt_tx:Fail to cancel remain on channel\n");
 			}
-			if (woal_cfg80211_remain_on_channel_cfg
-			    (remain_priv, MOAL_IOCTL_WAIT, MTRUE,
-			     &channel_status, NULL, 0, 0)) {
-				PRINTM(MERROR,
-				       "mgmt_tx:Fail to cancel remain on channel\n");
-				ret = -EFAULT;
-				goto done;
-			}
-
 			if (priv->phandle->cookie) {
 				cfg80211_remain_on_channel_expired(
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0)
@@ -2041,6 +2059,7 @@ woal_cfg80211_custom_ie(moal_private * priv,
 	t_u8 *pos = NULL;
 	t_u16 len = 0;
 	int ret = 0;
+	mlan_status status = MLAN_STATUS_SUCCESS;
 
 	ENTER();
 
@@ -2097,8 +2116,8 @@ woal_cfg80211_custom_ie(moal_private * priv,
 
 	memcpy(&misc->param.cust_ie, custom_ie, sizeof(mlan_ds_misc_custom_ie));
 
-	if (MLAN_STATUS_SUCCESS !=
-	    woal_request_ioctl(priv, ioctl_req, MOAL_IOCTL_WAIT)) {
+	status = woal_request_ioctl(priv, ioctl_req, MOAL_IOCTL_WAIT);
+	if (MLAN_STATUS_SUCCESS != status) {
 		ret = -EFAULT;
 		goto done;
 	}
@@ -2144,10 +2163,9 @@ woal_cfg80211_custom_ie(moal_private * priv,
 		ret = -EFAULT;
 
 done:
-	if (ioctl_req)
+	if (status != MLAN_STATUS_PENDING)
 		kfree(ioctl_req);
-	if (custom_ie)
-		kfree(custom_ie);
+	kfree(custom_ie);
 	LEAVE();
 	return ret;
 }
@@ -2169,7 +2187,7 @@ woal_get_first_p2p_ie(const t_u8 * ie, int len, t_u8 * ie_out)
 	int length;
 	t_u8 id = 0;
 	t_u16 out_len = 0;
-	IEEEtypes_VendorSpecific_t *pVendorIe = NULL;
+	IEEEtypes_VendorSpecific_t *pvendor_ie = NULL;
 	const u8 p2p_oui[4] = { 0x50, 0x6f, 0x9a, 0x09 };
 
 	while (left_len >= 2) {
@@ -2178,11 +2196,11 @@ woal_get_first_p2p_ie(const t_u8 * ie, int len, t_u8 * ie_out)
 		if ((length + 2) > left_len)
 			break;
 		if (id == VENDOR_SPECIFIC_221) {
-			pVendorIe = (IEEEtypes_VendorSpecific_t *) pos;
+			pvendor_ie = (IEEEtypes_VendorSpecific_t *) pos;
 			if (!memcmp
-			    (pVendorIe->vend_hdr.oui, p2p_oui,
-			     sizeof(pVendorIe->vend_hdr.oui)) &&
-			    pVendorIe->vend_hdr.oui_type == p2p_oui[3]) {
+			    (pvendor_ie->vend_hdr.oui, p2p_oui,
+			     sizeof(pvendor_ie->vend_hdr.oui)) &&
+			    pvendor_ie->vend_hdr.oui_type == p2p_oui[3]) {
 				memcpy(ie_out + out_len, pos, length + 2);
 				out_len += length + 2;
 				break;
@@ -2212,7 +2230,7 @@ woal_filter_beacon_ies(const t_u8 * ie, int len, t_u8 * ie_out, t_u16 wps_flag)
 	int length;
 	t_u8 id = 0;
 	t_u16 out_len = 0;
-	IEEEtypes_VendorSpecific_t *pVendorIe = NULL;
+	IEEEtypes_VendorSpecific_t *pvendor_ie = NULL;
 	const u8 wps_oui[4] = { 0x00, 0x50, 0xf2, 0x04 };
 	const u8 p2p_oui[4] = { 0x50, 0x6f, 0x9a, 0x09 };
 	const u8 wfd_oui[4] = { 0x50, 0x6f, 0x9a, 0x0a };
@@ -2234,24 +2252,24 @@ woal_filter_beacon_ies(const t_u8 * ie, int len, t_u8 * ie_out, t_u16 wps_flag)
 			break;
 		case VENDOR_SPECIFIC_221:
 			/* filter out wmm ie */
-			pVendorIe = (IEEEtypes_VendorSpecific_t *) pos;
+			pvendor_ie = (IEEEtypes_VendorSpecific_t *) pos;
 			if (!memcmp
-			    (pVendorIe->vend_hdr.oui, wmm_oui,
-			     sizeof(pVendorIe->vend_hdr.oui)) &&
-			    pVendorIe->vend_hdr.oui_type == wmm_oui[3])
+			    (pvendor_ie->vend_hdr.oui, wmm_oui,
+			     sizeof(pvendor_ie->vend_hdr.oui)) &&
+			    pvendor_ie->vend_hdr.oui_type == wmm_oui[3])
 				break;
 			/* filter out wps ie */
 			if ((!memcmp
-			     (pVendorIe->vend_hdr.oui, wps_oui,
-			      sizeof(pVendorIe->vend_hdr.oui)) &&
-			     pVendorIe->vend_hdr.oui_type == wps_oui[3]) &&
+			     (pvendor_ie->vend_hdr.oui, wps_oui,
+			      sizeof(pvendor_ie->vend_hdr.oui)) &&
+			     pvendor_ie->vend_hdr.oui_type == wps_oui[3]) &&
 			    (wps_flag & IE_MASK_WPS))
 				break;
 			/* filter out first p2p ie */
 			if ((!memcmp
-			     (pVendorIe->vend_hdr.oui, p2p_oui,
-			      sizeof(pVendorIe->vend_hdr.oui)) &&
-			     pVendorIe->vend_hdr.oui_type == p2p_oui[3])) {
+			     (pvendor_ie->vend_hdr.oui, p2p_oui,
+			      sizeof(pvendor_ie->vend_hdr.oui)) &&
+			     pvendor_ie->vend_hdr.oui_type == p2p_oui[3])) {
 				if (!find_p2p_ie && (wps_flag & IE_MASK_P2P)) {
 					find_p2p_ie = MTRUE;
 					break;
@@ -2259,9 +2277,9 @@ woal_filter_beacon_ies(const t_u8 * ie, int len, t_u8 * ie_out, t_u16 wps_flag)
 			}
 			/* filter out wfd ie */
 			if ((!memcmp
-			     (pVendorIe->vend_hdr.oui, wfd_oui,
-			      sizeof(pVendorIe->vend_hdr.oui)) &&
-			     pVendorIe->vend_hdr.oui_type == wfd_oui[3]) &&
+			     (pvendor_ie->vend_hdr.oui, wfd_oui,
+			      sizeof(pvendor_ie->vend_hdr.oui)) &&
+			     pvendor_ie->vend_hdr.oui_type == wfd_oui[3]) &&
 			    (wps_flag & IE_MASK_WFD))
 				break;
 			memcpy(ie_out + out_len, pos, length + 2);
@@ -2330,7 +2348,7 @@ woal_is_selected_registrar_on(const t_u8 * ie, int len)
 	const t_u8 *pos = ie;
 	int length;
 	t_u8 id = 0;
-	IEEEtypes_VendorSpecific_t *pVendorIe = NULL;
+	IEEEtypes_VendorSpecific_t *pvendor_ie = NULL;
 	const u8 wps_oui[4] = { 0x00, 0x50, 0xf2, 0x04 };
 
 	while (left_len >= 2) {
@@ -2340,11 +2358,11 @@ woal_is_selected_registrar_on(const t_u8 * ie, int len)
 			break;
 		switch (id) {
 		case VENDOR_SPECIFIC_221:
-			pVendorIe = (IEEEtypes_VendorSpecific_t *) pos;
+			pvendor_ie = (IEEEtypes_VendorSpecific_t *) pos;
 			if (!memcmp
-			    (pVendorIe->vend_hdr.oui, wps_oui,
-			     sizeof(pVendorIe->vend_hdr.oui)) &&
-			    pVendorIe->vend_hdr.oui_type == wps_oui[3]) {
+			    (pvendor_ie->vend_hdr.oui, wps_oui,
+			     sizeof(pvendor_ie->vend_hdr.oui)) &&
+			    pvendor_ie->vend_hdr.oui_type == wps_oui[3]) {
 				PRINTM(MIOCTL, "Find WPS ie\n");
 				return is_selected_registrar_on(pos,
 								length + 2);
@@ -2682,14 +2700,10 @@ woal_cfg80211_mgmt_frame_ie(moal_private * priv,
 	PRINTM(MIOCTL, "beacon=%x assocresp=%x proberesp=%x probereq=%x\n",
 	       beacon_index, assocresp_index, proberesp_index, probereq_index);
 done:
-	if (beacon_ies_data)
-		kfree(beacon_ies_data);
-	if (proberesp_ies_data)
-		kfree(proberesp_ies_data);
-	if (assocresp_ies_data)
-		kfree(assocresp_ies_data);
-	if (probereq_ies_data)
-		kfree(probereq_ies_data);
+	kfree(beacon_ies_data);
+	kfree(proberesp_ies_data);
+	kfree(assocresp_ies_data);
+	kfree(probereq_ies_data);
 
 	LEAVE();
 

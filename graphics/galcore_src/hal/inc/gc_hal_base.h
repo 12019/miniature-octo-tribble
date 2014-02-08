@@ -152,10 +152,7 @@ typedef struct _gcsPLS
 #endif
 
     gctBOOL                     bDungeonDefenders;
-
     gctBOOL                     bBypassMode;
-
-    gctBOOL                     bChrome;
 }
 gcsPLS;
 
@@ -236,7 +233,7 @@ typedef enum _gcePOOL
     gcvPOOL_CONTIGUOUS,
     gcvPOOL_DEFAULT_FORCE_CONTIGUOUS,
     gcvPOOL_DEFAULT_FORCE_CONTIGUOUS_CACHEABLE,
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     gcvPOOL_PMEM,
 #endif
     gcvPOOL_CMDBUF,

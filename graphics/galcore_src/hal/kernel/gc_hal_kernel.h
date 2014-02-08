@@ -434,7 +434,7 @@ struct _gckKERNEL
     /* Enable _TryToIdleGPU calling. */
     gctBOOL                     bTryIdleGPUEnable;
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     gctBOOL                     bDisablePmem;
 #endif
 
@@ -740,7 +740,7 @@ typedef union _gcuVIDMEM_NODE
         /* Contiguously allocated? */
         gctBOOL                 contiguous;
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
         gctBOOL                 bPmem;
 #endif
         /* mdl record pointer... a kmalloc address. Process agnostic. */
@@ -907,6 +907,13 @@ gckKERNEL_FlushTranslationCache(
     IN gctSIZE_T Bytes
     );
 #endif
+
+gceSTATUS
+gckKERNEL_QueryLastProfNode(
+    IN gckKERNEL Kernel,
+    OUT gctUINT32_PTR Index,
+    OUT gckProfNode_PTR * ProfNode
+    );
 
 gceSTATUS
 gckHARDWARE_QueryIdle(

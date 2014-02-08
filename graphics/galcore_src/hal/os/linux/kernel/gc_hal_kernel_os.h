@@ -54,12 +54,13 @@ typedef struct _LINUX_MDL
     gctPOINTER              kaddr;
 #endif /* NO_DMA_COHERENT */
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     struct pmem_region *    region;
     gctBOOL                 bPmem;
-#ifdef MRVL_VIDEO_MEMORY_USE_ION
+
+#   if (MRVL_VIDEO_MEMORY_USE_TYPE == gcdMEM_TYPE_ION)
     struct ion_handle       *ionHandle;
-#endif /* USE_ION */
+#   endif /* USE_ION */
 #endif
 
     gctINT                  numPages;
@@ -74,11 +75,6 @@ typedef struct _LINUX_MDL
 }
 LINUX_MDL, *PLINUX_MDL;
 
-extern PLINUX_MDL_MAP
-FindMdlMap(
-    IN PLINUX_MDL Mdl,
-    IN gctINT PID
-    );
 
 typedef struct _DRIVER_ARGS
 {
@@ -88,6 +84,14 @@ typedef struct _DRIVER_ARGS
     gctUINT32               OutputBufferSize;
 }
 DRIVER_ARGS;
+
+gceSTATUS
+gckOS_FindMdlMap(
+    IN gckOS Os,
+    IN PLINUX_MDL Mdl,
+    IN gctINT ProcessID,
+    OUT PLINUX_MDL_MAP *MdlMap
+    );
 
 /* Cleanup the signal table. */
 gceSTATUS

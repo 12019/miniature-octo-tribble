@@ -55,7 +55,7 @@ gceSTATUS gckVGMMU_Construct(
 {
     gckOS os;
     gckVGHARDWARE hardware;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckVGMMU mmu;
     gctUINT32 * pageTable;
     gctUINT32 i;
@@ -264,7 +264,7 @@ gceSTATUS gckVGMMU_AllocatePages(
     OUT gctUINT32 * Address
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT32 tail, index, i;
     gctUINT32 * table;
     gctBOOL allocated = gcvFALSE;

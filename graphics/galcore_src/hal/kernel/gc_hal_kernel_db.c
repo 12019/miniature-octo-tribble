@@ -69,16 +69,33 @@ gckKERNEL_NewDatabase(
     OUT gcsDATABASE_PTR * Database
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsDATABASE_PTR database = gcvNULL;
     gctBOOL acquired = gcvFALSE;
     gctSIZE_T slot;
     gctBOOL newAllocation = gcvFALSE;
+    gcsDATABASE_PTR existingDatabase;
+
     gcmkHEADER_ARG("Kernel=0x%x ProcessID=%d", Kernel, ProcessID);
 
     /* Acquire the database mutex. */
     gcmkONERROR(gckOS_AcquireMutex(Kernel->os, Kernel->db->dbMutex, gcvINFINITE));
     acquired = gcvTRUE;
+
+    /* Compute the hash for the database. */
+    slot = ProcessID % gcmCOUNTOF(Kernel->db->db);
+
+    /* Walk the hash list. */
+    for (existingDatabase = Kernel->db->db[slot];
+         existingDatabase != gcvNULL;
+         existingDatabase = existingDatabase->next)
+    {
+        if (existingDatabase->processID == ProcessID)
+        {
+            /* One process can't be added twice. */
+            gcmkONERROR(gcvSTATUS_NOT_SUPPORTED);
+        }
+    }
 
     if (Kernel->db->freeDatabase != gcvNULL)
     {
@@ -103,9 +120,6 @@ gckKERNEL_NewDatabase(
                                     gcmSIZEOF(gctPOINTER)*RECORD_HASH_TABLE_SIZE,
                                     (gctPOINTER *)&database->htable));
     }
-
-    /* Compute the hash for the database. */
-    slot = ProcessID % gcmCOUNTOF(Kernel->db->db);
 
     /* Insert the database into the hash. */
     database->next   = Kernel->db->db[slot];
@@ -181,7 +195,7 @@ gckKERNEL_FindDatabase(
     OUT gcsDATABASE_PTR * Database
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsDATABASE_PTR database, previous;
     gctSIZE_T slot;
     gctBOOL acquired = gcvFALSE;
@@ -285,7 +299,7 @@ gckKERNEL_DeleteDatabase(
     IN gcsDATABASE_PTR Database
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
     gcsDATABASE_PTR database;
 
@@ -388,7 +402,7 @@ gckKERNEL_NewRecord(
     OUT gcsDATABASE_RECORD_PTR * Record
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
     gcsDATABASE_RECORD_PTR record = gcvNULL;
 
@@ -477,7 +491,7 @@ gckKERNEL_DeleteRecord(
     OUT gctSIZE_T_PTR Bytes OPTIONAL
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
     gcsDATABASE_RECORD_PTR record, previous;
     gctUINT32 recordslot = 0;
@@ -586,7 +600,7 @@ gckKERNEL_FindRecord(
     OUT gcsDATABASE_RECORD_PTR Record
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
     gcsDATABASE_RECORD_PTR record;
     gctUINT32 recordslot = 0;
@@ -672,7 +686,7 @@ gckKERNEL_CreateProcessDB(
     IN gctUINT32 ProcessID
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsDATABASE_PTR database = gcvNULL;
 
     gcmkHEADER_ARG("Kernel=0x%x ProcessID=%d", Kernel, ProcessID);
@@ -816,7 +830,7 @@ gckKERNEL_AddProcessDB(
     IN gctSIZE_T Size
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
     gcsDATABASE_PTR database;
     gcsDATABASE_RECORD_PTR record = gcvNULL;
@@ -871,7 +885,7 @@ gckKERNEL_AddProcessDB(
 #if gcdDYNAMIC_SPEED
         {
             /* Test for first call. */
-            if (Kernel->db->lastSlowdown == 0)
+            if (Kernel->db->lastSlowdown[Kernel->core] == 0)
             {
                 /* Save milliseconds. */
                 Kernel->db->lastSlowdown[Kernel->core]     = time;
@@ -1020,7 +1034,7 @@ gckKERNEL_RemoveProcessDB(
     IN gctPOINTER Pointer
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsDATABASE_PTR database;
     gctSIZE_T bytes = 0;
 
@@ -1109,7 +1123,7 @@ gckKERNEL_FindProcessDB(
     OUT gcsDATABASE_RECORD_PTR Record
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsDATABASE_PTR database;
 
     gcmkHEADER_ARG("Kernel=0x%x ProcessID=%d Type=%d Pointer=0x%x",
@@ -1584,7 +1598,7 @@ gckKERNEL_PrintVIDMEMProcessDB(
     IN gctCHAR* Filename
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsDATABASE_PTR database;
     gcsDATABASE_RECORD_PTR record;
     gctPOINTER fp;
@@ -1752,7 +1766,7 @@ gckKERNEL_PrintFlagedProcessDB(
     IN gctCHAR* Filename
 )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsDATABASE_PTR database;
     gcsDATABASE_RECORD_PTR record;
     gctPOINTER fp;
@@ -1886,7 +1900,7 @@ gckKERNEL_DestroyProcessDB(
     IN gctUINT32 ProcessID
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsDATABASE_PTR database;
     gcsDATABASE_RECORD_PTR record, next;
     gctBOOL asynchronous;
@@ -2131,7 +2145,7 @@ gckKERNEL_QueryProcessDB(
     OUT gcuDATABASE_INFO * Info
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsDATABASE_PTR database;
 
     gcmkHEADER_ARG("Kernel=0x%x ProcessID=%d Type=%d Info=0x%x",
@@ -2343,6 +2357,79 @@ gckKERNEL_AddProfNode(
     return gcvSTATUS_OK;
 }
 
+/*******************************************************************************
+**  gckKERNEL_QueryLastProfNode
+**
+**  Return the last index and head address of profiling node array
+**
+**  INPUT:
+**
+**      gckKERNEL Kernel
+**          Pointer to a gckKERNEL object.
+**
+**  OUTPUT:
+**
+**      gctUINT32_PTR Index
+**          the last index of profNode
+**
+**      gckProfNode_PTR * ProfNode
+**          the head address of profiling nodes array
+**
+*/
+gceSTATUS
+gckKERNEL_QueryLastProfNode(
+    IN gckKERNEL Kernel,
+    OUT gctUINT32_PTR Index,
+    OUT gckProfNode_PTR * ProfNode
+    )
+{
+    gceSTATUS status = gcvSTATUS_OK;
+    gctBOOL acquired;
+    gceCORE core;
+
+    gcmkHEADER_ARG("Kernel=0x%x", Kernel);
+    gcmkVERIFY_OBJECT(Kernel, gcvOBJ_KERNEL);
+
+    /* Verify arguments */
+    gcmkVERIFY_ARGUMENT(Index != gcvNULL);
+    gcmkVERIFY_ARGUMENT(ProfNode != gcvNULL);
+
+    if(Index == gcvNULL || ProfNode == gcvNULL)
+    {
+        status = gcvSTATUS_INVALID_ARGUMENT;
+        goto OnError;
+    }
+
+    gcmkONERROR(gckOS_AcquireMutex(Kernel->os, Kernel->db->profMutex, gcvINFINITE));
+    acquired = gcvTRUE;
+
+    core = Kernel->core;
+    *Index = Kernel->db->lastNodeIndex[core];
+
+    /*
+        return corresponding head address of prof nodes,
+        if not exsits, just return NULL
+    */
+    if(core == gcvCORE_MAJOR)
+        *ProfNode = &Kernel->db->profNode[0];
+    else if(core == gcvCORE_2D)
+        *ProfNode = &Kernel->db->profNode2D[0];
+    else
+        *ProfNode = gcvNULL;
+
+    gcmkVERIFY_OK(gckOS_ReleaseMutex(Kernel->os, Kernel->db->profMutex));
+    acquired = gcvFALSE;
+
+OnError:
+    gcmkFOOTER_NO();
+
+    if(acquired)
+    {
+        gcmkVERIFY_OK(gckOS_ReleaseMutex(Kernel->os, Kernel->db->profMutex));
+    }
+
+    return status;
+}
 /*******************************************************************************
 **  gckKERNEL_QueryIdleProfile
 **
@@ -2643,7 +2730,7 @@ gckKERNEL_GetProcessDBCache(
     OUT gcskSECURE_CACHE_PTR * Cache
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsDATABASE_PTR database;
 
     gcmkHEADER_ARG("Kernel=0x%x ProcessID=%d", Kernel, ProcessID);

@@ -32,7 +32,7 @@ static DEFINE_SPINLOCK(gpufreq_driver_lock);
 static struct gpufreq_driver *gpufreq_driver;
 
 /* notifier list: to notify GPU clock rate changes. */
-static unsigned int inited_cpufreq_trans_notifier_list = 0;
+static unsigned int inited_gpufreq_trans_notifier_list = 0;
 static struct srcu_notifier_head gpufreq_trans_notifier_list;
 
 static gckOS gpu_os = NULL;
@@ -608,6 +608,16 @@ int __gpufreq_driver_target(IN struct gpufreq_policy *policy,
     return ret;
 }
 
+int __gpufreq_driver_get(IN unsigned int gpu)
+{
+    int ret = -EINVAL;
+
+    if(gpufreq_driver->get)
+        ret = gpufreq_driver->get(gpu);
+
+    return ret;
+}
+
 static int gpufreq_governor_get(struct gpufreq_governor *governor, unsigned int event)
 {
     /* this governor was not added to governor list */
@@ -838,7 +848,7 @@ static struct notifier_block gpufreq_cpu_trans_nb = {
 static int _gpufreq_trans_notifier_list_init(void)
 {
     srcu_init_notifier_head(&gpufreq_trans_notifier_list);
-    inited_cpufreq_trans_notifier_list = 1;
+    inited_gpufreq_trans_notifier_list = 1;
     return 0;
 }
 
@@ -846,7 +856,7 @@ int gpufreq_register_notifier(struct notifier_block *nb, unsigned int list)
 {
     int ret;
 
-    WARN_ON(!inited_cpufreq_trans_notifier_list);
+    WARN_ON(!inited_gpufreq_trans_notifier_list);
 
     switch (list)
     {
@@ -866,7 +876,7 @@ int gpufreq_unregister_notifier(struct notifier_block *nb, unsigned int list)
 {
     int ret;
 
-    WARN_ON(!inited_cpufreq_trans_notifier_list);
+    WARN_ON(!inited_gpufreq_trans_notifier_list);
 
     switch (list)
     {
@@ -1315,8 +1325,14 @@ int gpufreq_frequency_table_target(struct gpufreq_policy *policy,
         if(freq == GPUFREQ_ENTRY_INVALID)
             continue;
 
+#if 0
+	 /*
+		 remove this quick path if qos is enabled with such case:
+			 qos_max < policy->min
+	 */
         if(freq < policy->min || freq > policy->max)
             continue;
+#endif
 
         switch(relation)
         {

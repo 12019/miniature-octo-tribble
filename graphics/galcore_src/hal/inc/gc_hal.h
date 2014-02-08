@@ -218,10 +218,35 @@ gceCORE;
         prefix##FOOTER_ARG("status=%d", gcvSTATUS_INVALID_OBJECT); \
         return gcvSTATUS_INVALID_OBJECT; \
     }
+/*Please guarantee the function "gceSTATUS status" exist*/
+#define _gcmVERIFY_OBJECT_NORETUNE(prefix, obj, t) \
+    if ((obj) == gcvNULL) \
+    { \
+        prefix##TRACE(gcvLEVEL_ERROR, \
+                      #prefix "VERIFY_OBJECT failed: NULL"); \
+        prefix##TRACE(gcvLEVEL_ERROR, "  expected: %c%c%c%c", \
+                      gcmCC_PRINT(t)); \
+        prefix##ASSERT((obj) != gcvNULL); \
+        prefix##FOOTER_ARG("status=%d", gcvSTATUS_INVALID_OBJECT); \
+        status = gcvSTATUS_INVALID_OBJECT; \
+        goto OnError; \
+    } \
+    else if (((gcsOBJECT*) (obj))->type != t) \
+    { \
+        prefix##TRACE(gcvLEVEL_ERROR, \
+                      #prefix "VERIFY_OBJECT failed: %c%c%c%c", \
+                      gcmCC_PRINT(((gcsOBJECT*) (obj))->type)); \
+        prefix##TRACE(gcvLEVEL_ERROR, "  expected: %c%c%c%c", \
+                      gcmCC_PRINT(t)); \
+        prefix##ASSERT(((gcsOBJECT*)(obj))->type == t); \
+        prefix##FOOTER_ARG("status=%d", gcvSTATUS_INVALID_OBJECT); \
+        status = gcvSTATUS_INVALID_OBJECT; \
+        goto OnError; \
+    }
 
 #define gcmVERIFY_OBJECT(obj, t)     _gcmVERIFY_OBJECT(gcm, obj, t)
 #define gcmkVERIFY_OBJECT(obj, t)    _gcmVERIFY_OBJECT(gcmk, obj, t)
-
+#define gcmkVERIFY_OBJECT_NORETUNE(obj, t)    _gcmVERIFY_OBJECT_NORETUNE(gcmk, obj, t)
 /******************************************************************************/
 /*VERIFY_OBJECT if special return expected*/
 /******************************************************************************/
@@ -339,7 +364,7 @@ gckOS_AllocatePagedMemoryEx(
     OUT gctPHYS_ADDR * Physical
     );
 
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
 /* Allocate pmem memory. */
 gceSTATUS
 gckOS_AllocatePmemMemory(
@@ -1377,14 +1402,24 @@ gckOS_CacheInvalidate(
     gctPOINTER Logical,
     gctSIZE_T Bytes
     );
-
-/* Flush Cache */
+#if MRVL_OLD_FLUSHCACHE
 gceSTATUS
 gckOS_FlushCache(
     IN gctSIZE_T start,
     IN gctSIZE_T length,
     IN gctINT direction
     );
+#else
+/* Flush Cache */
+gceSTATUS
+gckOS_FlushCache(
+    IN gckOS Os,
+    IN gceCORE Core,
+    IN gctSIZE_T start,
+    IN gctSIZE_T length,
+    IN gctINT direction
+    );
+#endif
 
 
 /******************************************************************************\
@@ -1701,11 +1736,19 @@ gckOS_DestroySemaphore(
     IN gctPOINTER Semaphore
     );
 
-/* Acquire a semahore. */
+/* Acquire a semahore interupted. */
 gceSTATUS
 gckOS_AcquireSemaphore(
     IN gckOS Os,
     IN gctPOINTER Semaphore
+    );
+
+/* Acquire a semahore uninterupted timeout. */
+gceSTATUS
+gckOS_AcquireSemaphore_Timeout(
+    IN gckOS Os,
+    IN gctPOINTER Semaphore,
+    IN gctUINT32 Wait
     );
 
 /* Try to acquire a semahore. */
@@ -1924,7 +1967,7 @@ gceSTATUS
 gckVIDMEM_ConstructVirtual(
     IN gckKERNEL Kernel,
     IN gctBOOL Contiguous,
-#if MRVL_VIDEO_MEMORY_USE_PMEM
+#if (MRVL_VIDEO_MEMORY_USE_TYPE != gcdMEM_TYPE_NONE)
     IN gctBOOL IsPmem,
 #endif
     IN gctSIZE_T Bytes,

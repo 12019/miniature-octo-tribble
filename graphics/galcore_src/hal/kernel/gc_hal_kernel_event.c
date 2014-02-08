@@ -45,7 +45,7 @@ gckEVENT_AllocateQueue(
     OUT gcsEVENT_QUEUE_PTR * Queue
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
 
     gcmkHEADER_ARG("Event=0x%x", Event);
 
@@ -102,7 +102,7 @@ gckEVENT_FreeRecord(
     IN gcsEVENT_PTR Record
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
 
     gcmkHEADER_ARG("Event=0x%x Record=0x%x", Event, Record);
@@ -147,7 +147,7 @@ gckEVENT_IsEmpty(
     OUT gctBOOL_PTR IsEmpty
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctSIZE_T i;
 
     gcmkHEADER_ARG("Event=0x%x", Event);
@@ -202,7 +202,7 @@ _TryToIdleGPU(
     IN gckEVENT Event
 )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL empty = gcvFALSE, idle = gcvFALSE;
     gctBOOL powerLocked = gcvFALSE;
     gckHARDWARE hardware;
@@ -375,7 +375,7 @@ gckEVENT_Construct(
     )
 {
     gckOS os;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gckEVENT eventObj = gcvNULL;
     int i;
     gcsEVENT_PTR record;
@@ -646,7 +646,7 @@ gckEVENT_GetEvent(
     )
 {
     gctINT i, id;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
     gctINT32 free;
 
@@ -797,7 +797,7 @@ gckEVENT_AllocateRecord(
     OUT gcsEVENT_PTR * Record
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctBOOL acquired = gcvFALSE;
     gctINT i;
     gcsEVENT_PTR record;
@@ -1090,7 +1090,7 @@ gckEVENT_Unlock(
     IN gceSURF_TYPE Type
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsHAL_INTERFACE iface;
 
     gcmkHEADER_ARG("Event=0x%x FromWhere=%d Node=0x%x Type=%d",
@@ -1147,7 +1147,7 @@ gckEVENT_FreeVideoMemory(
     IN gceKERNEL_WHERE FromWhere
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsHAL_INTERFACE iface;
 
     gcmkHEADER_ARG("Event=0x%x VideoMemory=0x%x FromWhere=%d",
@@ -1206,7 +1206,7 @@ gckEVENT_FreeNonPagedMemory(
     IN gceKERNEL_WHERE FromWhere
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsHAL_INTERFACE iface;
 
     gcmkHEADER_ARG("Event=0x%x Bytes=%lu Physical=0x%x Logical=0x%x "
@@ -1270,7 +1270,7 @@ gckEVENT_FreeContiguousMemory(
     IN gceKERNEL_WHERE FromWhere
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsHAL_INTERFACE iface;
 
     gcmkHEADER_ARG("Event=0x%x Bytes=%lu Physical=0x%x Logical=0x%x "
@@ -1330,7 +1330,7 @@ gckEVENT_Signal(
     IN gceKERNEL_WHERE FromWhere
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsHAL_INTERFACE iface;
 
     gcmkHEADER_ARG("Event=0x%x Signal=0x%x FromWhere=%d",
@@ -1387,7 +1387,7 @@ gckEVENT_CommitDone(
     IN gceKERNEL_WHERE FromWhere
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsHAL_INTERFACE iface;
 
     gcmkHEADER_ARG("Event=0x%x FromWhere=%d", Event, FromWhere);
@@ -1441,7 +1441,7 @@ gckEVENT_Submit(
     IN gctBOOL FromPower
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gctUINT8 id = 0xFF;
     gcsEVENT_QUEUE_PTR queue;
     gctBOOL acquired = gcvFALSE;
@@ -1619,7 +1619,7 @@ gckEVENT_Commit(
     IN gcsQUEUE_PTR Queue
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsQUEUE_PTR record = gcvNULL, next;
     gcsQUEUE queue;
     gctUINT32 processID;
@@ -1744,7 +1744,7 @@ gckEVENT_Compose(
     IN gcsHAL_COMPOSE_PTR Info
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsEVENT_PTR headRecord = gcvNULL;
     gcsEVENT_PTR tailRecord = gcvNULL;
     gcsEVENT_PTR tempRecord = gcvNULL;
@@ -2567,7 +2567,7 @@ gckEVENT_FreeProcess(
     gctSIZE_T i;
     gctBOOL acquired = gcvFALSE;
     gcsEVENT_PTR record, next;
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
     gcsEVENT_PTR deleteHead, deleteTail;
 
     gcmkHEADER_ARG("Event=0x%x ProcessID=%d", Event, ProcessID);
@@ -2697,7 +2697,7 @@ gckEVENT_Stop(
     IN OUT gctSIZE_T * waitSize
     )
 {
-    gceSTATUS status;
+    gceSTATUS status = gcvSTATUS_OK;
    /* gctSIZE_T waitSize;*/
     gcsEVENT_PTR record = gcvNULL;
     gctUINT8 id = 0xFF;

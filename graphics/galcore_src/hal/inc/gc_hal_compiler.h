@@ -3326,6 +3326,54 @@ gcUNIFORM_GetFormat(
     OUT gctBOOL * IsPointer
     );
 
+/* workaround for uniform array[1]. */
+/*******************************************************************************
+**  gcUNIFORM_GetArrayLen1Flag
+**
+**  Get the ArrayLen1Flag of a uniform.
+**
+**  INPUT:
+**
+**      gcUNIFORM Uniform
+**          Pointer to a gcUNIFORM object.
+**
+**  OUTPUT:
+**
+**      gctBOOL *  isArray.
+**          Pointer to a variable receiving the state wheter the uniform is a array[1].
+*/
+gceSTATUS
+gcUNIFORM_GetArrayLen1Flag(
+    IN gcUNIFORM Uniform,
+    OUT gctBOOL *  isArray
+    );
+
+/* workaround for uniform array[1]. */
+/*******************************************************************************
+**  gcUNIFORM_SetArrayLen1Flag
+**
+**  Set the ArrayLen1Flag of a uniform.
+**
+**  INPUT:
+**
+**      gcUNIFORM Uniform
+**          Pointer to a gcUNIFORM object.
+**
+**
+**      gctBOOL    Flags
+**          Flags whether the uniform is a array[1].
+**
+**  OUTPUT:
+**
+**       Nothing;
+*/
+
+gceSTATUS
+gcUNIFORM_SetArrayLen1Flag(
+    IN gcUNIFORM Uniform,
+    IN gctBOOL    Flags
+    );
+
 /*******************************************************************************
 **  gcUNIFORM_SetFormat
 **
